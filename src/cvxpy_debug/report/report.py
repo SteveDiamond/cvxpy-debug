@@ -29,6 +29,10 @@ class DebugReport:
         List of diagnostic findings.
     suggestions : list
         List of fix suggestions.
+    unbounded_variables : list
+        Variables that are unbounded (if unbounded).
+    unbounded_ray : Any
+        Direction of unboundedness (if unbounded).
     """
 
     problem: cp.Problem
@@ -38,6 +42,8 @@ class DebugReport:
     constraint_info: list = field(default_factory=list)
     findings: list = field(default_factory=list)
     suggestions: list = field(default_factory=list)
+    unbounded_variables: list = field(default_factory=list)
+    unbounded_ray: Any = None
 
     def add_finding(self, finding: str) -> None:
         """Add a diagnostic finding."""
@@ -71,7 +77,7 @@ def format_report(report: DebugReport) -> str:
     # Header
     width = 64
     lines.append("═" * width)
-    title = "INFEASIBILITY REPORT" if report.status == "infeasible" else "DEBUG REPORT"
+    title = _get_report_title(report)
     lines.append(title.center(width))
     lines.append("═" * width)
     lines.append("")
@@ -82,11 +88,18 @@ def format_report(report: DebugReport) -> str:
             lines.append(finding)
         lines.append("")
 
-    # Conflicting constraints
+    # Conflicting constraints (for infeasibility)
     if report.constraint_info:
         lines.append("CONFLICTING CONSTRAINTS")
         lines.append("─" * 23)
         lines.append(format_constraint_table(report.constraint_info))
+        lines.append("")
+
+    # Unbounded variables (for unboundedness)
+    if report.unbounded_variables:
+        lines.append("UNBOUNDED VARIABLES")
+        lines.append("─" * 19)
+        lines.append(_format_unbounded_table(report.unbounded_variables))
         lines.append("")
 
     # Suggestions
@@ -96,5 +109,32 @@ def format_report(report: DebugReport) -> str:
         for suggestion in report.suggestions:
             lines.append(f"• {suggestion}")
         lines.append("")
+
+    return "\n".join(lines)
+
+
+def _get_report_title(report: DebugReport) -> str:
+    """Get appropriate title based on report status."""
+    if report.status == "infeasible":
+        return "INFEASIBILITY REPORT"
+    elif report.status == "unbounded":
+        return "UNBOUNDEDNESS REPORT"
+    else:
+        return "DEBUG REPORT"
+
+
+def _format_unbounded_table(unbounded_variables: list) -> str:
+    """Format table of unbounded variables."""
+    if not unbounded_variables:
+        return "  (none)"
+
+    lines = []
+    lines.append("  Variable            Direction")
+    lines.append("  ─────────────────   ─────────")
+
+    for info in unbounded_variables:
+        name = info.get("name", "?")
+        direction_sym = info.get("direction_symbol", "?")
+        lines.append(f"  {name:<18}  {direction_sym}")
 
     return "\n".join(lines)

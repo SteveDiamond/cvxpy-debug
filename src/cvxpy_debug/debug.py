@@ -6,6 +6,7 @@ import cvxpy as cp
 
 from cvxpy_debug.infeasibility import diagnose_infeasibility
 from cvxpy_debug.report.report import DebugReport
+from cvxpy_debug.unbounded import diagnose_unboundedness
 
 
 def debug(
@@ -70,9 +71,7 @@ def debug(
             find_minimal_iis=find_minimal_iis,
         )
     elif problem.status in (cp.UNBOUNDED, cp.UNBOUNDED_INACCURATE):
-        # TODO: Implement unboundedness diagnosis
-        report.add_finding("Problem is unbounded.")
-        report.add_suggestion("Add bounds to your variables or constraints.")
+        diagnose_unboundedness(problem, report, solver=solver)
     elif problem.status == cp.OPTIMAL:
         report.add_finding("Problem solved successfully.")
     else:
