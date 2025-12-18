@@ -33,6 +33,8 @@ class DebugReport:
         Variables that are unbounded (if unbounded).
     unbounded_ray : Any
         Direction of unboundedness (if unbounded).
+    numerical_analysis : Any
+        Numerical analysis results (if inaccurate status).
     """
 
     problem: cp.Problem
@@ -44,6 +46,7 @@ class DebugReport:
     suggestions: list = field(default_factory=list)
     unbounded_variables: list = field(default_factory=list)
     unbounded_ray: Any = None
+    numerical_analysis: Any = None
 
     def add_finding(self, finding: str) -> None:
         """Add a diagnostic finding."""
@@ -119,6 +122,9 @@ def _get_report_title(report: DebugReport) -> str:
         return "INFEASIBILITY REPORT"
     elif report.status == "unbounded":
         return "UNBOUNDEDNESS REPORT"
+    elif report.status in ("optimal_inaccurate", "infeasible_inaccurate",
+                           "unbounded_inaccurate"):
+        return "NUMERICAL ACCURACY REPORT"
     else:
         return "DEBUG REPORT"
 

@@ -5,6 +5,7 @@ from typing import Any
 import cvxpy as cp
 
 from cvxpy_debug.infeasibility import diagnose_infeasibility
+from cvxpy_debug.numerical import diagnose_numerical_issues
 from cvxpy_debug.report.report import DebugReport
 from cvxpy_debug.unbounded import diagnose_unboundedness
 
@@ -15,6 +16,7 @@ def debug(
     solver: Any | None = None,
     verbose: bool = True,
     find_minimal_iis: bool = True,
+    include_conditioning: bool = True,
 ) -> DebugReport:
     """
     Debug a CVXPY optimization problem.
@@ -33,6 +35,9 @@ def debug(
     find_minimal_iis : bool, default True
         If True, refine infeasibility diagnosis to find minimal
         irreducible infeasible subsystem. Slower but more precise.
+    include_conditioning : bool, default True
+        If True, estimate condition number for numerical analysis.
+        Can be slow for large problems.
 
     Returns
     -------
@@ -63,17 +68,39 @@ def debug(
     report = DebugReport(problem=problem)
 
     # Diagnose based on problem status
-    if problem.status in (cp.INFEASIBLE, cp.INFEASIBLE_INACCURATE):
+    if problem.status == cp.INFEASIBLE:
         diagnose_infeasibility(
             problem,
             report,
             solver=solver,
             find_minimal_iis=find_minimal_iis,
         )
-    elif problem.status in (cp.UNBOUNDED, cp.UNBOUNDED_INACCURATE):
+    elif problem.status == cp.UNBOUNDED:
         diagnose_unboundedness(problem, report, solver=solver)
     elif problem.status == cp.OPTIMAL:
         report.add_finding("Problem solved successfully.")
+    elif problem.status in (
+        cp.OPTIMAL_INACCURATE,
+        cp.INFEASIBLE_INACCURATE,
+        cp.UNBOUNDED_INACCURATE,
+    ):
+        # Run numerical diagnostics for inaccurate statuses
+        diagnose_numerical_issues(
+            problem,
+            report,
+            solver=solver,
+            include_conditioning=include_conditioning,
+        )
+        # Also run base diagnosis for _INACCURATE variants
+        if problem.status == cp.INFEASIBLE_INACCURATE:
+            diagnose_infeasibility(
+                problem,
+                report,
+                solver=solver,
+                find_minimal_iis=find_minimal_iis,
+            )
+        elif problem.status == cp.UNBOUNDED_INACCURATE:
+            diagnose_unboundedness(problem, report, solver=solver)
     else:
         report.add_finding(f"Problem status: {problem.status}")
 
