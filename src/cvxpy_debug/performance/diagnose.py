@@ -12,7 +12,7 @@ from cvxpy_debug.performance.suggestions import generate_suggestions, generate_s
 from cvxpy_debug.report.report import DebugReport
 
 
-def diagnose_performance(
+def debug_performance(
     problem: cp.Problem,
     report: DebugReport,
     *,

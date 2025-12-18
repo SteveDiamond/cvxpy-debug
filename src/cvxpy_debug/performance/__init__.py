@@ -7,10 +7,10 @@ from cvxpy_debug.performance.dataclasses import (
     PerformanceAnalysis,
     ProblemMetrics,
 )
-from cvxpy_debug.performance.diagnose import diagnose_performance
+from cvxpy_debug.performance.diagnose import debug_performance
 
 __all__ = [
-    "diagnose_performance",
+    "debug_performance",
     "PerformanceAnalysis",
     "ProblemMetrics",
     "MatrixStructure",

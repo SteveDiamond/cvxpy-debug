@@ -1,5 +1,5 @@
 """Infeasibility diagnosis module."""
 
-from cvxpy_debug.infeasibility.diagnose import diagnose_infeasibility
+from cvxpy_debug.infeasibility.diagnose import debug_infeasibility
 
-__all__ = ["diagnose_infeasibility"]
+__all__ = ["debug_infeasibility"]

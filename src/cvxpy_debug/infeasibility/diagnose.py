@@ -10,7 +10,7 @@ from cvxpy_debug.infeasibility.mapping import get_constraint_info
 from cvxpy_debug.report.report import DebugReport
 
 
-def diagnose_infeasibility(
+def debug_infeasibility(
     problem: cp.Problem,
     report: DebugReport,
     *,

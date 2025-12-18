@@ -5,7 +5,7 @@ import pytest
 
 import cvxpy as cp
 
-from cvxpy_debug.numerical import diagnose_numerical_issues
+from cvxpy_debug.numerical import debug_numerical_issues
 from cvxpy_debug.numerical.conditioning import analyze_conditioning
 from cvxpy_debug.numerical.recommendations import generate_recommendations
 from cvxpy_debug.numerical.scaling import analyze_scaling
@@ -222,7 +222,7 @@ class TestIntegration:
         prob.solve()
 
         report = DebugReport(problem=prob)
-        analysis = diagnose_numerical_issues(prob, report, include_conditioning=False)
+        analysis = debug_numerical_issues(prob, report, include_conditioning=False)
 
         assert analysis is not None
         assert len(report.findings) > 0
@@ -236,7 +236,7 @@ class TestIntegration:
         prob.solve()
 
         report = DebugReport(problem=prob)
-        analysis = diagnose_numerical_issues(prob, report, include_conditioning=False)
+        analysis = debug_numerical_issues(prob, report, include_conditioning=False)
 
         assert analysis.scaling is not None
         assert analysis.scaling.badly_scaled
@@ -248,7 +248,7 @@ class TestIntegration:
         prob.solve()
 
         report = DebugReport(problem=prob)
-        diagnose_numerical_issues(prob, report, include_conditioning=False)
+        debug_numerical_issues(prob, report, include_conditioning=False)
 
         assert len(report.findings) > 0
         # Should have some suggestions (at least alternative solvers)

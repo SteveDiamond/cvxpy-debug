@@ -6,7 +6,7 @@ import pytest
 from cvxpy_debug.performance import (
     AntiPatternType,
     PerformanceAnalysis,
-    diagnose_performance,
+    debug_performance,
 )
 from cvxpy_debug.performance.matrix_analysis import analyze_matrix_structure
 from cvxpy_debug.performance.patterns import detect_anti_patterns
@@ -23,7 +23,7 @@ class TestMetrics:
         prob = cp.Problem(cp.Minimize(cp.sum(x)), constraints)
 
         report = DebugReport(problem=prob)
-        analysis = diagnose_performance(prob, report, include_matrix_analysis=False)
+        analysis = debug_performance(prob, report, include_matrix_analysis=False)
 
         assert analysis.metrics.num_variables == 1
         assert analysis.metrics.num_scalar_variables == 5
@@ -40,7 +40,7 @@ class TestMetrics:
         )
 
         report = DebugReport(problem=prob)
-        analysis = diagnose_performance(prob, report, include_matrix_analysis=False)
+        analysis = debug_performance(prob, report, include_matrix_analysis=False)
 
         assert analysis.metrics.num_variables == 3
         assert analysis.metrics.num_scalar_variables == 6  # 3 + 2 + 1
@@ -62,7 +62,7 @@ class TestLoopDetection:
         prob = cp.Problem(cp.Minimize(cp.sum(x)), constraints)
 
         report = DebugReport(problem=prob)
-        analysis = diagnose_performance(prob, report)
+        analysis = debug_performance(prob, report)
 
         # Should detect the anti-pattern
         pattern_types = [p.pattern_type for p in analysis.anti_patterns]
@@ -87,7 +87,7 @@ class TestLoopDetection:
         prob = cp.Problem(cp.Minimize(cp.sum(x)), constraints)
 
         report = DebugReport(problem=prob)
-        analysis = diagnose_performance(prob, report)
+        analysis = debug_performance(prob, report)
 
         # Should not detect loop anti-pattern
         high_severity = [p for p in analysis.anti_patterns if p.severity == "high"]
@@ -140,7 +140,7 @@ class TestHighConstraintRatio:
         prob = cp.Problem(cp.Minimize(cp.sum(x)), constraints)
 
         report = DebugReport(problem=prob)
-        analysis = diagnose_performance(prob, report)
+        analysis = debug_performance(prob, report)
 
         # Should have high constraint ratio
         assert analysis.metrics.constraint_variable_ratio > 10
@@ -157,7 +157,7 @@ class TestSuggestions:
         prob = cp.Problem(cp.Minimize(cp.sum(x)), constraints)
 
         report = DebugReport(problem=prob)
-        analysis = diagnose_performance(prob, report)
+        analysis = debug_performance(prob, report)
 
         # Should have either anti-patterns with suggestions or general suggestions
         assert len(analysis.suggestions) > 0 or len(analysis.anti_patterns) > 0
@@ -172,7 +172,7 @@ class TestIntegration:
         prob = cp.Problem(cp.Minimize(cp.sum(x)), [x >= 0])
 
         report = DebugReport(problem=prob)
-        diagnose_performance(prob, report)
+        debug_performance(prob, report)
 
         assert len(report.findings) > 0
         assert report.performance_analysis is not None
@@ -212,7 +212,7 @@ class TestSummary:
         prob = cp.Problem(cp.Minimize(cp.sum(x)), [x >= 0, x <= 10])
 
         report = DebugReport(problem=prob)
-        analysis = diagnose_performance(prob, report)
+        analysis = debug_performance(prob, report)
 
         assert "No major performance issues" in analysis.summary or analysis.summary == ""
 
@@ -224,7 +224,7 @@ class TestSummary:
         prob = cp.Problem(cp.Minimize(cp.sum(x)), constraints)
 
         report = DebugReport(problem=prob)
-        analysis = diagnose_performance(prob, report)
+        analysis = debug_performance(prob, report)
 
         # Should have some summary content
         assert len(analysis.summary) > 0

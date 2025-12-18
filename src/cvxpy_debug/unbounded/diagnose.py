@@ -17,7 +17,7 @@ from cvxpy_debug.unbounded.suggestions import (
 )
 
 
-def diagnose_unboundedness(
+def debug_unboundedness(
     problem: cp.Problem,
     report: DebugReport,
     *,

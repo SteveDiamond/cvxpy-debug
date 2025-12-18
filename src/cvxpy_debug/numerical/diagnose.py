@@ -13,7 +13,7 @@ from cvxpy_debug.numerical.violations import analyze_violations
 from cvxpy_debug.report.report import DebugReport
 
 
-def diagnose_numerical_issues(
+def debug_numerical_issues(
     problem: cp.Problem,
     report: DebugReport,
     *,

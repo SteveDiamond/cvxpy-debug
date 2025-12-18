@@ -4,11 +4,11 @@ from typing import Any
 
 import cvxpy as cp
 
-from cvxpy_debug.infeasibility import diagnose_infeasibility
-from cvxpy_debug.numerical import diagnose_numerical_issues
-from cvxpy_debug.performance import diagnose_performance
+from cvxpy_debug.infeasibility import debug_infeasibility
+from cvxpy_debug.numerical import debug_numerical_issues
+from cvxpy_debug.performance import debug_performance
 from cvxpy_debug.report.report import DebugReport
-from cvxpy_debug.unbounded import diagnose_unboundedness
+from cvxpy_debug.unbounded import debug_unboundedness
 
 
 def debug(
@@ -74,14 +74,14 @@ def debug(
 
     # Diagnose based on problem status
     if problem.status == cp.INFEASIBLE:
-        diagnose_infeasibility(
+        debug_infeasibility(
             problem,
             report,
             solver=solver,
             find_minimal_iis=find_minimal_iis,
         )
     elif problem.status == cp.UNBOUNDED:
-        diagnose_unboundedness(problem, report, solver=solver)
+        debug_unboundedness(problem, report, solver=solver)
     elif problem.status == cp.OPTIMAL:
         report.add_finding("Problem solved successfully.")
     elif problem.status in (
@@ -90,7 +90,7 @@ def debug(
         cp.UNBOUNDED_INACCURATE,
     ):
         # Run numerical diagnostics for inaccurate statuses
-        diagnose_numerical_issues(
+        debug_numerical_issues(
             problem,
             report,
             solver=solver,
@@ -98,20 +98,20 @@ def debug(
         )
         # Also run base diagnosis for _INACCURATE variants
         if problem.status == cp.INFEASIBLE_INACCURATE:
-            diagnose_infeasibility(
+            debug_infeasibility(
                 problem,
                 report,
                 solver=solver,
                 find_minimal_iis=find_minimal_iis,
             )
         elif problem.status == cp.UNBOUNDED_INACCURATE:
-            diagnose_unboundedness(problem, report, solver=solver)
+            debug_unboundedness(problem, report, solver=solver)
     else:
         report.add_finding(f"Problem status: {problem.status}")
 
     # Always run performance analysis if requested
     if include_performance:
-        diagnose_performance(problem, report)
+        debug_performance(problem, report)
 
     if verbose:
         print(report)

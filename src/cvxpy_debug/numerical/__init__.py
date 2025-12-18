@@ -9,10 +9,10 @@ from cvxpy_debug.numerical.dataclasses import (
     SolverStatsAnalysis,
     ViolationAnalysis,
 )
-from cvxpy_debug.numerical.diagnose import diagnose_numerical_issues
+from cvxpy_debug.numerical.diagnose import debug_numerical_issues
 
 __all__ = [
-    "diagnose_numerical_issues",
+    "debug_numerical_issues",
     "NumericalAnalysis",
     "ScalingAnalysis",
     "ViolationAnalysis",
