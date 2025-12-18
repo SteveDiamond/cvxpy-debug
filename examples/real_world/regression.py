@@ -50,7 +50,7 @@ def example_badly_scaled_features():
     print("\nThis can cause numerical issues in the solver.\n")
 
     prob.solve()
-    report = cvxpy_debug.debug(prob, analyze_conditioning=True)
+    report = cvxpy_debug.debug(prob, include_conditioning=True)
 
     print("\n" + "-" * 40)
     print("Better: Standardized Features")

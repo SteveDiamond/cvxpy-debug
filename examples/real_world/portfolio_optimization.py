@@ -127,7 +127,7 @@ def example_ill_conditioned_covariance():
     print("\nThis may cause numerical issues in optimization.\n")
 
     prob.solve()
-    report = cvxpy_debug.debug(prob, analyze_conditioning=True)
+    report = cvxpy_debug.debug(prob, include_conditioning=True)
 
 
 def example_efficient_frontier():

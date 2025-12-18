@@ -69,7 +69,7 @@ def example_ill_conditioned():
     print("High condition numbers amplify floating-point errors.\n")
 
     prob.solve()
-    report = cvxpy_debug.debug(prob, analyze_conditioning=True)
+    report = cvxpy_debug.debug(prob, include_conditioning=True)
 
 
 def example_constraint_violations():
