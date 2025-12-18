@@ -6,6 +6,7 @@ import cvxpy as cp
 
 from cvxpy_debug.infeasibility import diagnose_infeasibility
 from cvxpy_debug.numerical import diagnose_numerical_issues
+from cvxpy_debug.performance import diagnose_performance
 from cvxpy_debug.report.report import DebugReport
 from cvxpy_debug.unbounded import diagnose_unboundedness
 
@@ -17,6 +18,7 @@ def debug(
     verbose: bool = True,
     find_minimal_iis: bool = True,
     include_conditioning: bool = True,
+    include_performance: bool = True,
 ) -> DebugReport:
     """
     Debug a CVXPY optimization problem.
@@ -38,6 +40,9 @@ def debug(
     include_conditioning : bool, default True
         If True, estimate condition number for numerical analysis.
         Can be slow for large problems.
+    include_performance : bool, default True
+        If True, analyze problem structure for performance anti-patterns
+        like loop-generated constraints.
 
     Returns
     -------
@@ -103,6 +108,10 @@ def debug(
             diagnose_unboundedness(problem, report, solver=solver)
     else:
         report.add_finding(f"Problem status: {problem.status}")
+
+    # Always run performance analysis if requested
+    if include_performance:
+        diagnose_performance(problem, report)
 
     if verbose:
         print(report)

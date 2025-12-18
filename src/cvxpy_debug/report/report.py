@@ -35,6 +35,8 @@ class DebugReport:
         Direction of unboundedness (if unbounded).
     numerical_analysis : Any
         Numerical analysis results (if inaccurate status).
+    performance_analysis : Any
+        Performance analysis results.
     """
 
     problem: cp.Problem
@@ -47,6 +49,7 @@ class DebugReport:
     unbounded_variables: list = field(default_factory=list)
     unbounded_ray: Any = None
     numerical_analysis: Any = None
+    performance_analysis: Any = None
 
     def add_finding(self, finding: str) -> None:
         """Add a diagnostic finding."""
@@ -103,6 +106,18 @@ def format_report(report: DebugReport) -> str:
         lines.append("UNBOUNDED VARIABLES")
         lines.append("─" * 19)
         lines.append(_format_unbounded_table(report.unbounded_variables))
+        lines.append("")
+
+    # Performance analysis
+    if report.performance_analysis and report.performance_analysis.anti_patterns:
+        lines.append("PERFORMANCE ANALYSIS")
+        lines.append("─" * 20)
+        for pattern in report.performance_analysis.anti_patterns:
+            severity_marker = {"high": "!!", "medium": "!", "low": ""}
+            marker = severity_marker.get(pattern.severity, "")
+            lines.append(f"  {marker}[{pattern.severity.upper()}] {pattern.description}")
+        if report.performance_analysis.summary:
+            lines.append(f"  Summary: {report.performance_analysis.summary}")
         lines.append("")
 
     # Suggestions
