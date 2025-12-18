@@ -51,22 +51,6 @@ def generate_suggestions(
             "(GUROBI, MOSEK) or specialized open-source solvers (HIGHS for LP/MIP)."
         )
 
-    # Matrix structure suggestions
-    if matrix_structure:
-        if matrix_structure.sparsity > 0.1:
-            suggestions.append(
-                f"Constraint matrix is {matrix_structure.sparsity*100:.1f}% dense. "
-                "Sparse problems typically have <1% density. "
-                "Check if problem structure can be exploited for sparsity."
-            )
-
-        dense_count = matrix_structure.row_pattern_counts.get("dense", 0)
-        if dense_count > 10:
-            suggestions.append(
-                f"Problem has {dense_count} dense constraint rows. "
-                "Consider reformulating to reduce constraint density."
-            )
-
     # Deduplicate while preserving order
     seen = set()
     unique_suggestions = []
