@@ -1,6 +1,5 @@
 """Tests for elastic relaxation."""
 
-import pytest
 import cvxpy as cp
 
 from cvxpy_debug.infeasibility.elastic import find_infeasibility_contributors

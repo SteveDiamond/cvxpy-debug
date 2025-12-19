@@ -2,7 +2,6 @@
 
 import cvxpy as cp
 import numpy as np
-import pytest
 
 from cvxpy_debug.infeasibility.relaxation import (
     _relax_equality,
@@ -249,10 +248,7 @@ class TestRelaxPSD:
         slack, relaxed = _relax_psd(constraint)
 
         # Force X to have negative eigenvalue: X[0,0] <= -1
-        prob = cp.Problem(
-            cp.Minimize(slack),
-            relaxed + [X[0, 0] <= -1, X[1, 1] >= 0, X[0, 1] == 0]
-        )
+        prob = cp.Problem(cp.Minimize(slack), relaxed + [X[0, 0] <= -1, X[1, 1] >= 0, X[0, 1] == 0])
         prob.solve()
 
         assert prob.status == cp.OPTIMAL
@@ -301,10 +297,7 @@ class TestRelaxationIntegration:
         slack2, relaxed2 = relax_constraint(c2)
 
         if slack1 is not None and slack2 is not None:
-            prob = cp.Problem(
-                cp.Minimize(slack1 + slack2),
-                relaxed1 + relaxed2
-            )
+            prob = cp.Problem(cp.Minimize(slack1 + slack2), relaxed1 + relaxed2)
             prob.solve()
 
             assert prob.status == cp.OPTIMAL
@@ -314,7 +307,6 @@ class TestRelaxationIntegration:
     def test_mixed_constraint_relaxation(self):
         """Test relaxation of mixed constraint types."""
         x = cp.Variable(3, name="x")
-        X = cp.Variable((2, 2), symmetric=True, name="X")
 
         constraints = [
             x[0] <= 5,
@@ -331,10 +323,7 @@ class TestRelaxationIntegration:
                 all_relaxed.extend(relaxed)
 
         if slacks:
-            prob = cp.Problem(
-                cp.Minimize(sum(slacks)),
-                all_relaxed
-            )
+            prob = cp.Problem(cp.Minimize(sum(slacks)), all_relaxed)
             prob.solve()
 
             assert prob.status == cp.OPTIMAL

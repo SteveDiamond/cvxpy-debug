@@ -1,7 +1,6 @@
 """Tests for report module."""
 
 import cvxpy as cp
-import pytest
 
 from cvxpy_debug.report.report import (
     DebugReport,
@@ -148,9 +147,7 @@ class TestFormatReport:
         report = DebugReport(
             problem=prob,
             status="unbounded",
-            unbounded_variables=[
-                {"name": "x", "direction": "below", "direction_symbol": "-inf"}
-            ],
+            unbounded_variables=[{"name": "x", "direction": "below", "direction_symbol": "-inf"}],
         )
 
         result = format_report(report)
@@ -263,9 +260,7 @@ class TestFormatUnboundedTable:
 
     def test_single_variable(self):
         """Test formatting single variable."""
-        unbounded = [
-            {"name": "x", "direction": "below", "direction_symbol": "-inf"}
-        ]
+        unbounded = [{"name": "x", "direction": "below", "direction_symbol": "-inf"}]
 
         result = _format_unbounded_table(unbounded)
 
@@ -290,9 +285,7 @@ class TestFormatUnboundedTable:
 
     def test_column_headers(self):
         """Test that column headers are present."""
-        unbounded = [
-            {"name": "x", "direction": "below", "direction_symbol": "-inf"}
-        ]
+        unbounded = [{"name": "x", "direction": "below", "direction_symbol": "-inf"}]
 
         result = _format_unbounded_table(unbounded)
 
@@ -340,9 +333,7 @@ class TestReportIntegration:
         report = DebugReport(
             problem=prob,
             status="unbounded",
-            unbounded_variables=[
-                {"name": "x", "direction": "below", "direction_symbol": "-inf"}
-            ],
+            unbounded_variables=[{"name": "x", "direction": "below", "direction_symbol": "-inf"}],
             findings=["Problem is unbounded below"],
             suggestions=["Add lower bound to x"],
         )

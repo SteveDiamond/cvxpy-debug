@@ -1,5 +1,7 @@
 """Elastic relaxation method for finding infeasibility contributors."""
 
+from __future__ import annotations
+
 from typing import Any
 
 import cvxpy as cp
@@ -77,9 +79,7 @@ def find_infeasibility_contributors(
 
     if relaxed_problem.status not in (cp.OPTIMAL, cp.OPTIMAL_INACCURATE):
         # Relaxed problem should always be feasible
-        raise RuntimeError(
-            f"Relaxed problem has unexpected status: {relaxed_problem.status}"
-        )
+        raise RuntimeError(f"Relaxed problem has unexpected status: {relaxed_problem.status}")
 
     # Find constraints with non-zero slack
     contributors = []
@@ -150,7 +150,7 @@ def _create_bound_relaxations(
             mapping[var_id] = (slack, f"{var.name()} <= 0")
 
         # Handle PSD constraint
-        elif hasattr(var, 'is_psd') and var.is_psd():
+        elif hasattr(var, "is_psd") and var.is_psd():
             # For PSD, we add slack to the diagonal
             n = var.shape[0]
             slack = cp.Variable(nonneg=True)
@@ -159,7 +159,7 @@ def _create_bound_relaxations(
             mapping[var_id] = (slack, f"{var.name()} >> 0")
 
         # Handle NSD constraint
-        elif hasattr(var, 'is_nsd') and var.is_nsd():
+        elif hasattr(var, "is_nsd") and var.is_nsd():
             n = var.shape[0]
             slack = cp.Variable(nonneg=True)
             slacks.append(slack)

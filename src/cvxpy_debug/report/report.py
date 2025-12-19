@@ -137,8 +137,7 @@ def _get_report_title(report: DebugReport) -> str:
         return "INFEASIBILITY REPORT"
     elif report.status == "unbounded":
         return "UNBOUNDEDNESS REPORT"
-    elif report.status in ("optimal_inaccurate", "infeasible_inaccurate",
-                           "unbounded_inaccurate"):
+    elif report.status in ("optimal_inaccurate", "infeasible_inaccurate", "unbounded_inaccurate"):
         return "NUMERICAL ACCURACY REPORT"
     else:
         return "DEBUG REPORT"

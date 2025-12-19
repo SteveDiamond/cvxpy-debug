@@ -47,7 +47,7 @@ def _get_label(constraint: cp.Constraint) -> str:
         return expr_str
 
     # Fallback to id-based label
-    if hasattr(constraint, 'id'):
+    if hasattr(constraint, "id"):
         return f"constraint_{constraint.id}"
 
     return str(constraint)[:40]
@@ -84,32 +84,32 @@ def _constraint_to_string(constraint: cp.Constraint) -> str:
 def _expr_to_string(expr) -> str:
     """Convert expression to concise string (symbolic form, not values)."""
     # Check if it's a Constant (has is_constant method)
-    if hasattr(expr, 'is_constant') and expr.is_constant():
-        if hasattr(expr, 'value') and expr.value is not None:
+    if hasattr(expr, "is_constant") and expr.is_constant():
+        if hasattr(expr, "value") and expr.value is not None:
             val = expr.value
-            if hasattr(val, '__float__'):
+            if hasattr(val, "__float__"):
                 return f"{float(val):.4g}"
-            if hasattr(val, 'item'):  # numpy scalar
+            if hasattr(val, "item"):  # numpy scalar
                 return f"{val.item():.4g}"
         return str(expr)
 
     # Handle specific expression types BEFORE checking name
     expr_type = type(expr).__name__
 
-    if expr_type == 'Sum':
+    if expr_type == "Sum":
         # Get the variable being summed
         if expr.args:
             inner = _expr_to_string(expr.args[0])
             return f"sum({inner})"
 
-    if expr_type == 'norm':
+    if expr_type == "norm":
         if expr.args:
             inner = _expr_to_string(expr.args[0])
             return f"norm({inner})"
 
     # Check for Variable (has name attribute and is a Variable type)
-    if expr_type == 'Variable':
-        if hasattr(expr, 'name') and expr.name():
+    if expr_type == "Variable":
+        if hasattr(expr, "name") and expr.name():
             return expr.name()
 
     # For expressions, show symbolic form

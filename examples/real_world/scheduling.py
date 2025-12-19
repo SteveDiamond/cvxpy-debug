@@ -13,6 +13,7 @@ Common issues:
 
 import cvxpy as cp
 import numpy as np
+
 import cvxpy_debug
 
 
@@ -56,9 +57,9 @@ def example_task_scheduling():
     for i, j in precedence:
         print(f"  {task_names[i]} ({task_durations[i]}d) -> {task_names[j]}")
     print(f"\nDeadline: {deadline} days")
-    print(f"Critical path: 5 + 10 + 4 + 2 = 21 days (infeasible!)\n")
+    print("Critical path: 5 + 10 + 4 + 2 = 21 days (infeasible!)\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
 
 def example_resource_constrained():
@@ -76,12 +77,14 @@ def example_resource_constrained():
     schedule = cp.Variable((n_tasks, n_periods), nonneg=True, name="schedule")
 
     task_durations = np.array([3, 4, 2, 5])
-    resource_usage = np.array([
-        [2, 1],  # Task 0 uses 2 of resource 1, 1 of resource 2
-        [1, 2],
-        [2, 2],
-        [1, 1],
-    ])
+    resource_usage = np.array(
+        [
+            [2, 1],  # Task 0 uses 2 of resource 1, 1 of resource 2
+            [1, 2],
+            [2, 2],
+            [1, 1],
+        ]
+    )
     resource_capacity = np.array([3, 3])  # Per period
 
     constraints = []
@@ -93,9 +96,7 @@ def example_resource_constrained():
     # Resource capacity per period
     for t in range(n_periods):
         for r in range(n_resources):
-            constraints.append(
-                resource_usage[:, r] @ schedule[:, t] <= resource_capacity[r]
-            )
+            constraints.append(resource_usage[:, r] @ schedule[:, t] <= resource_capacity[r])
 
     # All tasks must complete
     constraints.append(schedule <= 1)  # At most 1 unit per period
@@ -104,13 +105,12 @@ def example_resource_constrained():
     prob = cp.Problem(cp.Minimize(cp.sum(schedule)), constraints)
 
     total_work = sum(task_durations)
-    total_capacity = n_periods * min(resource_capacity)
 
     print(f"\n{n_tasks} tasks over {n_periods} periods")
     print(f"Total work needed: {total_work} task-periods")
     print(f"Resource capacity per period: {resource_capacity}")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
 
 def example_machine_scheduling():
@@ -120,7 +120,6 @@ def example_machine_scheduling():
     print("=" * 60)
 
     n_jobs = 3
-    n_machines = 2
 
     # Each job has multiple operations, each on a specific machine
     # Job 0: Machine 0 (3h) -> Machine 1 (2h)
@@ -137,9 +136,6 @@ def example_machine_scheduling():
 
     # Duration of each operation
     durations = [[3, 2], [4, 3], [2, 5]]
-
-    # Machine assignment for each operation
-    machines = [[0, 1], [1, 0], [0, 1]]
 
     constraints = []
 
@@ -180,7 +176,7 @@ def example_machine_scheduling():
     print(f"\nDeadline: {deadline} hours")
     print("This may be infeasible due to machine conflicts.\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
 
 def example_shift_scheduling():
@@ -226,7 +222,7 @@ def example_shift_scheduling():
     if total_min_coverage > total_max_capacity:
         print(f"Infeasible: need {total_min_coverage} but max is {total_max_capacity}\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
 
 def example_cyclic_precedence():
@@ -253,7 +249,7 @@ def example_cyclic_precedence():
     print("  Task A (2) -> Task B (3) -> Task C (4) -> Task A")
     print("\nThis creates a cycle and is always infeasible.\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
 
 def main():

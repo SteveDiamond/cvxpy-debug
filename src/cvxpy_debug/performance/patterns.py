@@ -1,5 +1,7 @@
 """Anti-pattern detection for CVXPY problems."""
 
+from __future__ import annotations
+
 import cvxpy as cp
 
 from cvxpy_debug.performance.dataclasses import (
@@ -108,20 +110,14 @@ def _detect_loop_constraints(
         if suspicious_types:
             ctype, indices = suspicious_types[0]
             affected = indices[:20]  # First 20 as sample
-            description_parts.append(
-                f"{len(indices)} {ctype} constraints (may be loop-generated)"
-            )
+            description_parts.append(f"{len(indices)} {ctype} constraints (may be loop-generated)")
 
         if many_singletons and matrix_structure:
             singleton_count = matrix_structure.row_pattern_counts.get("singleton", 0)
-            description_parts.append(
-                f"{singleton_count} singleton constraints in matrix"
-            )
+            description_parts.append(f"{singleton_count} singleton constraints in matrix")
 
         if has_repeated and matrix_structure:
-            total_repeated = sum(
-                len(g) for g in matrix_structure.repeated_row_groups
-            )
+            total_repeated = sum(len(g) for g in matrix_structure.repeated_row_groups)
             description_parts.append(f"{total_repeated} repeated constraint rows")
 
         return AntiPattern(

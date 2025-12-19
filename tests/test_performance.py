@@ -1,15 +1,12 @@
 """Tests for performance diagnostics module."""
 
 import cvxpy as cp
-import pytest
 
 from cvxpy_debug.performance import (
     AntiPatternType,
-    PerformanceAnalysis,
     debug_performance,
 )
 from cvxpy_debug.performance.matrix_analysis import analyze_matrix_structure
-from cvxpy_debug.performance.patterns import detect_anti_patterns
 from cvxpy_debug.report.report import DebugReport
 
 

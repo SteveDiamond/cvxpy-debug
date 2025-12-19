@@ -1,5 +1,7 @@
 """Condition number estimation for CVXPY problems."""
 
+from __future__ import annotations
+
 import cvxpy as cp
 import numpy as np
 from scipy import sparse
@@ -77,8 +79,7 @@ def analyze_conditioning(problem: cp.Problem) -> ConditioningAnalysis:
             matrix_info["estimation_method"] = "exact"
 
         ill_conditioned = (
-            condition_number is not None
-            and condition_number > ILL_CONDITIONED_THRESHOLD
+            condition_number is not None and condition_number > ILL_CONDITIONED_THRESHOLD
         )
 
         return ConditioningAnalysis(

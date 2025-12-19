@@ -1,5 +1,7 @@
 """Solver statistics analysis for CVXPY problems."""
 
+from __future__ import annotations
+
 import cvxpy as cp
 
 from cvxpy_debug.numerical.dataclasses import SolverStatsAnalysis
@@ -65,8 +67,15 @@ def analyze_solver_stats(problem: cp.Problem) -> SolverStatsAnalysis | None:
     max_iterations = None
     if solver_key in SOLVER_DEFAULTS:
         defaults = SOLVER_DEFAULTS[solver_key]
-        for key in ["max_iters", "max_iter", "maxiters", "IterationLimit",
-                    "iterations_limit", "iteration_limit", "it_lim"]:
+        for key in [
+            "max_iters",
+            "max_iter",
+            "maxiters",
+            "IterationLimit",
+            "iterations_limit",
+            "iteration_limit",
+            "it_lim",
+        ]:
             if key in defaults:
                 max_iterations = defaults[key]
                 break
@@ -126,13 +135,9 @@ def _check_solver_specific_issues(
     if solver_key == "SCS":
         if isinstance(extra, dict):
             if extra.get("res_pri", 0) > 1e-3:
-                issues.append(
-                    f"SCS primal residual ({extra.get('res_pri'):.2e}) is high"
-                )
+                issues.append(f"SCS primal residual ({extra.get('res_pri'):.2e}) is high")
             if extra.get("res_dual", 0) > 1e-3:
-                issues.append(
-                    f"SCS dual residual ({extra.get('res_dual'):.2e}) is high"
-                )
+                issues.append(f"SCS dual residual ({extra.get('res_dual'):.2e}) is high")
 
     # OSQP-specific checks
     elif solver_key == "OSQP":

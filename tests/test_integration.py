@@ -1,6 +1,5 @@
 """Integration tests for the main debug function."""
 
-import pytest
 import cvxpy as cp
 
 import cvxpy_debug

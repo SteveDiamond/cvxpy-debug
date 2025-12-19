@@ -1,5 +1,7 @@
 """Generate suggestions for fixing unbounded problems."""
 
+from __future__ import annotations
+
 from typing import Any
 
 import cvxpy as cp
@@ -44,14 +46,10 @@ def generate_suggestions(
 
             if direction > 0:
                 # Variable going to +inf
-                suggestions.append(
-                    f"Add upper bound to '{var_name}' (e.g., {var_name} <= <value>)"
-                )
+                suggestions.append(f"Add upper bound to '{var_name}' (e.g., {var_name} <= <value>)")
             else:
                 # Variable going to -inf
-                suggestions.append(
-                    f"Add lower bound to '{var_name}' (e.g., {var_name} >= <value>)"
-                )
+                suggestions.append(f"Add lower bound to '{var_name}' (e.g., {var_name} >= <value>)")
 
     # If no ray but we have unbounded variables, suggest based on that
     elif unbounded_vars:
@@ -65,13 +63,11 @@ def generate_suggestions(
                 )
             elif direction == "below":
                 suggestions.append(
-                    f"'{var_name}' has no lower bound. Consider adding "
-                    f"{var_name} >= <value>."
+                    f"'{var_name}' has no lower bound. Consider adding " f"{var_name} >= <value>."
                 )
             elif direction == "above":
                 suggestions.append(
-                    f"'{var_name}' has no upper bound. Consider adding "
-                    f"{var_name} <= <value>."
+                    f"'{var_name}' has no upper bound. Consider adding " f"{var_name} <= <value>."
                 )
 
     # Generic suggestions
@@ -83,9 +79,7 @@ def generate_suggestions(
 
     # Add suggestion about nonnegativity if applicable
     if _should_suggest_nonneg(problem, ray, unbounded_vars):
-        suggestions.append(
-            "If variables should be nonnegative, use cp.Variable(nonneg=True)."
-        )
+        suggestions.append("If variables should be nonnegative, use cp.Variable(nonneg=True).")
 
     return suggestions
 

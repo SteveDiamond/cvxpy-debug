@@ -56,13 +56,9 @@ def analyze_scaling(problem: cp.Problem) -> ScalingAnalysis:
             for coeff in coeffs:
                 abs_coeff = abs(coeff)
                 if abs_coeff > 0 and abs_coeff < VERY_SMALL_THRESHOLD:
-                    very_small.append(
-                        {"location": f"constraint_{i}", "value": coeff}
-                    )
+                    very_small.append({"location": f"constraint_{i}", "value": coeff})
                 elif abs_coeff > VERY_LARGE_THRESHOLD:
-                    very_large.append(
-                        {"location": f"constraint_{i}", "value": coeff}
-                    )
+                    very_large.append({"location": f"constraint_{i}", "value": coeff})
 
     # Compute overall range ratio
     overall_range = _compute_range(all_coefficients)

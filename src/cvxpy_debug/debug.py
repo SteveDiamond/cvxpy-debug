@@ -1,5 +1,7 @@
 """Main entry point for cvxpy-debug."""
 
+from __future__ import annotations
+
 from typing import Any
 
 import cvxpy as cp

@@ -1,9 +1,8 @@
 """Tests for IIS (Irreducible Infeasible Subsystem) finding."""
 
-import pytest
 import cvxpy as cp
 
-from cvxpy_debug.infeasibility.iis import find_minimal_iis, find_all_iis
+from cvxpy_debug.infeasibility.iis import find_all_iis, find_minimal_iis
 
 
 class TestMinimalIIS:
@@ -26,9 +25,9 @@ class TestMinimalIIS:
         """Test that non-essential constraints are removed from IIS."""
         x = cp.Variable(name="x")
         constraints = [
-            x >= 5,      # Essential for infeasibility
-            x <= 3,      # Essential for infeasibility
-            x >= 0,      # NOT essential (redundant with x >= 5)
+            x >= 5,  # Essential for infeasibility
+            x <= 3,  # Essential for infeasibility
+            x >= 0,  # NOT essential (redundant with x >= 5)
         ]
         prob = cp.Problem(cp.Minimize(x), constraints)
         prob.solve()

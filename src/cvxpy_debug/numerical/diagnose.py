@@ -1,5 +1,7 @@
 """Main orchestration for numerical diagnostics."""
 
+from __future__ import annotations
+
 from typing import Any
 
 import cvxpy as cp
@@ -171,9 +173,7 @@ def _populate_report(report: DebugReport, analysis: NumericalAnalysis) -> None:
             reverse=True,
         )[:5]
         for v in top_violations:
-            report.add_finding(
-                f"Constraint '{v.label}' violation: {v.violation_amount:.4e}"
-            )
+            report.add_finding(f"Constraint '{v.label}' violation: {v.violation_amount:.4e}")
 
     # Add conditioning findings
     if analysis.conditioning and analysis.conditioning.estimated:
@@ -200,24 +200,15 @@ def _populate_report(report: DebugReport, analysis: NumericalAnalysis) -> None:
         if rec.solver_name == "RESCALE":
             report.add_suggestion(rec.reason)
         elif rec.parameter_adjustments:
-            params = ", ".join(
-                f"{k}={v}" for k, v in rec.parameter_adjustments.items()
-            )
-            report.add_suggestion(
-                f"Try solver={rec.solver_name} with {params}"
-            )
+            params = ", ".join(f"{k}={v}" for k, v in rec.parameter_adjustments.items())
+            report.add_suggestion(f"Try solver={rec.solver_name} with {params}")
         else:
-            report.add_suggestion(
-                f"Try solver={rec.solver_name}: {rec.reason}"
-            )
+            report.add_suggestion(f"Try solver={rec.solver_name}: {rec.reason}")
 
     # Mention uninstalled solvers that could help
     uninstalled_recs = [
-        r for r in analysis.recommendations
-        if not r.is_installed and r.solver_name != "RESCALE"
+        r for r in analysis.recommendations if not r.is_installed and r.solver_name != "RESCALE"
     ][:2]
     if uninstalled_recs:
         names = ", ".join(r.solver_name for r in uninstalled_recs)
-        report.add_suggestion(
-            f"Consider installing: {names} (may provide better accuracy)"
-        )
+        report.add_suggestion(f"Consider installing: {names} (may provide better accuracy)")

@@ -1,9 +1,8 @@
 """Tests for numerical diagnostics module."""
 
+import cvxpy as cp
 import numpy as np
 import pytest
-
-import cvxpy as cp
 
 from cvxpy_debug.numerical import debug_numerical_issues
 from cvxpy_debug.numerical.conditioning import analyze_conditioning
@@ -96,7 +95,9 @@ class TestViolationAnalysis:
 
         violations = analyze_violations(prob, solver_name="SCS")
 
-        assert "eps_abs" in violations.solver_tolerances or "default" in violations.solver_tolerances
+        assert (
+            "eps_abs" in violations.solver_tolerances or "default" in violations.solver_tolerances
+        )
 
 
 class TestConditioningAnalysis:

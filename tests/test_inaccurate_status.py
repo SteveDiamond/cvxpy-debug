@@ -2,9 +2,7 @@
 
 import cvxpy as cp
 import numpy as np
-import pytest
 
-import cvxpy_debug
 from cvxpy_debug import debug
 
 
@@ -21,12 +19,8 @@ class TestOptimalInaccurate:
         np.random.seed(42)
         A = np.random.randn(10, 10)
         A = A @ A.T + 1e-6 * np.eye(10)  # Near-singular
-        b = np.random.randn(10)
 
-        prob = cp.Problem(
-            cp.Minimize(cp.quad_form(x, A)),
-            [cp.sum(x) == 1, x >= 0]
-        )
+        prob = cp.Problem(cp.Minimize(cp.quad_form(x, A)), [cp.sum(x) == 1, x >= 0])
         prob.solve()
 
         # Even if status is OPTIMAL, we can still run diagnostics
@@ -38,10 +32,7 @@ class TestOptimalInaccurate:
         """Test that numerical diagnostics run on solved problems."""
         x = cp.Variable(3, name="x")
 
-        prob = cp.Problem(
-            cp.Minimize(cp.sum_squares(x)),
-            [cp.sum(x) == 1, x >= 0]
-        )
+        prob = cp.Problem(cp.Minimize(cp.sum_squares(x)), [cp.sum(x) == 1, x >= 0])
         prob.solve()
 
         report = debug(prob)
@@ -58,10 +49,7 @@ class TestInfeasibleInaccurate:
         x = cp.Variable(name="x")
 
         # Clearly infeasible
-        prob = cp.Problem(
-            cp.Minimize(x),
-            [x >= 10, x <= 5]
-        )
+        prob = cp.Problem(cp.Minimize(x), [x >= 10, x <= 5])
 
         report = debug(prob)
 
@@ -80,7 +68,7 @@ class TestInfeasibleInaccurate:
                 x[0] >= 50,
                 x[1] >= 40,
                 x[2] >= 30,
-            ]
+            ],
         )
 
         report = debug(prob)
@@ -110,10 +98,7 @@ class TestUnboundedInaccurate:
         x = cp.Variable(2, name="x")
 
         # Unbounded with constraint
-        prob = cp.Problem(
-            cp.Minimize(x[0] - x[1]),
-            [x[0] + x[1] == 1]
-        )
+        prob = cp.Problem(cp.Minimize(x[0] - x[1]), [x[0] + x[1] == 1])
 
         report = debug(prob)
 
@@ -128,10 +113,7 @@ class TestMixedStatus:
         """Test handling of feasible optimal problems."""
         x = cp.Variable(name="x")
 
-        prob = cp.Problem(
-            cp.Minimize(x),
-            [x >= 0, x <= 10]
-        )
+        prob = cp.Problem(cp.Minimize(x), [x >= 0, x <= 10])
 
         report = debug(prob)
 
@@ -141,10 +123,7 @@ class TestMixedStatus:
         """Test graceful handling when solver has issues."""
         x = cp.Variable(name="x")
 
-        prob = cp.Problem(
-            cp.Minimize(x),
-            [x >= 0]
-        )
+        prob = cp.Problem(cp.Minimize(x), [x >= 0])
 
         # Even if problem has issues, debug should not crash
         try:
@@ -162,10 +141,7 @@ class TestDebugOptions:
         """Test find_minimal_iis option."""
         x = cp.Variable(name="x")
 
-        prob = cp.Problem(
-            cp.Minimize(x),
-            [x >= 10, x <= 5]
-        )
+        prob = cp.Problem(cp.Minimize(x), [x >= 10, x <= 5])
 
         report = debug(prob, find_minimal_iis=True)
 
@@ -176,10 +152,7 @@ class TestDebugOptions:
         x = cp.Variable(3, name="x")
         A = np.array([[1, 0.5, 0.3], [0.5, 1, 0.4], [0.3, 0.4, 1]])
 
-        prob = cp.Problem(
-            cp.Minimize(cp.quad_form(x, A)),
-            [cp.sum(x) == 1, x >= 0]
-        )
+        prob = cp.Problem(cp.Minimize(cp.quad_form(x, A)), [cp.sum(x) == 1, x >= 0])
         prob.solve()
 
         report = debug(prob, include_conditioning=True)
@@ -190,10 +163,7 @@ class TestDebugOptions:
         """Test solver parameter override."""
         x = cp.Variable(name="x")
 
-        prob = cp.Problem(
-            cp.Minimize(x),
-            [x >= 0, x <= 10]
-        )
+        prob = cp.Problem(cp.Minimize(x), [x >= 0, x <= 10])
 
         # Should work with default solver
         report = debug(prob)

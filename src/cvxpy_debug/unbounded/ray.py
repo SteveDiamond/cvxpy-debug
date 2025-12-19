@@ -1,5 +1,7 @@
 """Find unbounded ray/direction in optimization problems."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -122,9 +124,7 @@ def find_unbounded_ray(
         if var.is_scalar():
             # Scalar variable - get the scalar value
             scalar_val = float(np.atleast_1d(var_value).flat[0])
-            _check_bound_active(
-                var, scalar_val, M, tol, ray, artificial_lower, artificial_upper
-            )
+            _check_bound_active(var, scalar_val, M, tol, ray, artificial_lower, artificial_upper)
         else:
             # For array variables, check each element
             var_array = np.atleast_1d(var_value)

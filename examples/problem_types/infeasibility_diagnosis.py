@@ -9,6 +9,7 @@ constraint types.
 
 import cvxpy as cp
 import numpy as np
+
 import cvxpy_debug
 
 
@@ -38,7 +39,7 @@ def example_multiple_iis():
     print("  - y >= 20 and y <= 15\n")
 
     # Diagnose with minimal IIS to find one conflict at a time
-    report = cvxpy_debug.debug(problem, find_minimal_iis=True)
+    cvxpy_debug.debug(problem, find_minimal_iis=True)
 
     print("\nNote: With find_minimal_iis=True, only one IIS is reported.")
     print("In practice, fix one IIS, re-solve, and diagnose again.")
@@ -71,7 +72,7 @@ def example_equality_conflicts():
     print("  x[0] + x[2] = 8")
     print("  x[0] + x[1] + x[2] = 20  (inconsistent with above)\n")
 
-    report = cvxpy_debug.debug(problem)
+    cvxpy_debug.debug(problem)
 
 
 def example_bound_vs_constraint():
@@ -93,7 +94,7 @@ def example_bound_vs_constraint():
     print("\nVariable x is nonneg=True, but constraint says x <= -5")
     print("The implicit bound x >= 0 conflicts with x <= -5.\n")
 
-    report = cvxpy_debug.debug(problem)
+    cvxpy_debug.debug(problem)
 
 
 def example_elastic_relaxation_interpretation():
@@ -117,7 +118,7 @@ def example_elastic_relaxation_interpretation():
     print("\nBudget of 100, but minimums sum to 125 (gap of 25)")
     print("The slack values show how much each constraint contributes.\n")
 
-    report = cvxpy_debug.debug(problem)
+    cvxpy_debug.debug(problem)
 
     print("\n" + "-" * 40)
     print("Interpreting Slack Values:")
@@ -167,7 +168,7 @@ def example_complex_structure():
     print(f"  - {n_products} products, {n_resources} resources")
     print("  - Minimum production requirements conflict with resource limits\n")
 
-    report = cvxpy_debug.debug(problem, find_minimal_iis=True)
+    cvxpy_debug.debug(problem, find_minimal_iis=True)
 
 
 def main():

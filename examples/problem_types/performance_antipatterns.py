@@ -8,6 +8,7 @@ anti-patterns in CVXPY problems.
 
 import cvxpy as cp
 import numpy as np
+
 import cvxpy_debug
 
 
@@ -34,7 +35,7 @@ def example_loop_constraints():
     print(f"     {n} separate constraint objects created\n")
 
     prob_loop.solve()
-    report_loop = cvxpy_debug.debug(prob_loop)
+    cvxpy_debug.debug(prob_loop)
 
     print("\n" + "-" * 40)
     print("GOOD: Vectorized Alternative")
@@ -53,7 +54,7 @@ def example_loop_constraints():
     print("      cp.multiply(a, x) <= b\n")
 
     prob_vec.solve()
-    report_vec = cvxpy_debug.debug(prob_vec)
+    cvxpy_debug.debug(prob_vec)
 
 
 def example_scalar_on_vector():
@@ -80,7 +81,7 @@ def example_scalar_on_vector():
     print(f"     {2*n} constraints for {n}-element vector\n")
 
     prob_scalar.solve()
-    report_scalar = cvxpy_debug.debug(prob_scalar)
+    cvxpy_debug.debug(prob_scalar)
 
     print("\n" + "-" * 40)
     print("GOOD: Vectorized Bounds")
@@ -99,7 +100,7 @@ def example_scalar_on_vector():
     print("      x >= lower, x <= upper (2 constraints total)\n")
 
     prob_vector.solve()
-    report_vector = cvxpy_debug.debug(prob_vector)
+    cvxpy_debug.debug(prob_vector)
 
 
 def example_high_constraint_ratio():
@@ -123,7 +124,7 @@ def example_high_constraint_ratio():
     print("Most constraints cp.sum(x) <= 50+i are redundant.\n")
 
     prob_redundant.solve()
-    report = cvxpy_debug.debug(prob_redundant)
+    cvxpy_debug.debug(prob_redundant)
 
     print("\n" + "-" * 40)
     print("BETTER: Remove Redundant Constraints")
@@ -140,7 +141,7 @@ def example_high_constraint_ratio():
     print("\nKeep only the binding constraint: cp.sum(x) <= 50\n")
 
     prob_clean.solve()
-    report_clean = cvxpy_debug.debug(prob_clean)
+    cvxpy_debug.debug(prob_clean)
 
 
 def example_matrix_constraints():
@@ -166,7 +167,7 @@ def example_matrix_constraints():
     print(f"     {m} separate constraints for A @ x <= b\n")
 
     prob_rows.solve()
-    report_rows = cvxpy_debug.debug(prob_rows)
+    cvxpy_debug.debug(prob_rows)
 
     print("\n" + "-" * 40)
     print("GOOD: Single Matrix Constraint")
@@ -184,7 +185,7 @@ def example_matrix_constraints():
     print("\nGOOD: Single matrix inequality A @ x <= b\n")
 
     prob_matrix.solve()
-    report_matrix = cvxpy_debug.debug(prob_matrix)
+    cvxpy_debug.debug(prob_matrix)
 
 
 def example_variable_attributes():
@@ -202,14 +203,11 @@ def example_variable_attributes():
         cp.sum(x_explicit) == 1,
     ]
 
-    prob_explicit = cp.Problem(
-        cp.Minimize(cp.sum_squares(x_explicit)),
-        constraints_explicit
-    )
+    prob_explicit = cp.Problem(cp.Minimize(cp.sum_squares(x_explicit)), constraints_explicit)
 
     print("\nUsing explicit constraint x >= 0")
     prob_explicit.solve()
-    report_explicit = cvxpy_debug.debug(prob_explicit)
+    cvxpy_debug.debug(prob_explicit)
 
     print("\n" + "-" * 40)
     print("BETTER: Using nonneg=True Attribute")
@@ -225,7 +223,7 @@ def example_variable_attributes():
     print("More efficient - solver knows about this structure.\n")
 
     prob_attr.solve()
-    report_attr = cvxpy_debug.debug(prob_attr)
+    cvxpy_debug.debug(prob_attr)
 
 
 def main():

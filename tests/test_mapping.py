@@ -2,7 +2,6 @@
 
 import cvxpy as cp
 import numpy as np
-import pytest
 
 from cvxpy_debug.infeasibility.mapping import (
     _constraint_to_string,

@@ -1,5 +1,7 @@
 """Main infeasibility diagnosis orchestration."""
 
+from __future__ import annotations
+
 from typing import Any
 
 import cvxpy as cp
@@ -36,9 +38,7 @@ def debug_infeasibility(
     report.status = "infeasible"
 
     # Step 1: Find infeasibility contributors via elastic relaxation
-    contributors, slack_values = find_infeasibility_contributors(
-        problem, solver=solver
-    )
+    contributors, slack_values = find_infeasibility_contributors(problem, solver=solver)
 
     if not contributors:
         report.add_finding(
@@ -62,21 +62,21 @@ def debug_infeasibility(
     for constraint in iis:
         info = get_constraint_info(constraint)
         slack = slack_values.get(id(constraint), 0.0)
-        constraint_info.append({
-            "constraint": constraint,
-            "label": info["label"],
-            "expression": info["expression"],
-            "slack": slack,
-        })
+        constraint_info.append(
+            {
+                "constraint": constraint,
+                "label": info["label"],
+                "expression": info["expression"],
+                "slack": slack,
+            }
+        )
 
     report.constraint_info = constraint_info
 
     # Generate findings
     n_total = len(problem.constraints)
     n_conflict = len(iis)
-    report.add_finding(
-        f"Problem has {n_total} constraints. Found {n_conflict} that conflict."
-    )
+    report.add_finding(f"Problem has {n_total} constraints. Found {n_conflict} that conflict.")
 
     # Generate suggestions
     _generate_suggestions(report, constraint_info, slack_values)
@@ -99,17 +99,11 @@ def _generate_suggestions(
 ) -> None:
     """Generate fix suggestions based on constraint analysis."""
     # Find constraints with non-zero slack (the ones that need relaxing)
-    relaxation_needed = [
-        info for info in constraint_info if info["slack"] > 1e-6
-    ]
+    relaxation_needed = [info for info in constraint_info if info["slack"] > 1e-6]
 
     if relaxation_needed:
         for info in relaxation_needed:
-            report.add_suggestion(
-                f"Relax '{info['label']}' by {info['slack']:.4g}"
-            )
+            report.add_suggestion(f"Relax '{info['label']}' by {info['slack']:.4g}")
     else:
         # All slacks are zero - this can happen with bound conflicts
-        report.add_suggestion(
-            "Review the constraints in the IIS - they cannot all be satisfied."
-        )
+        report.add_suggestion("Review the constraints in the IIS - they cannot all be satisfied.")

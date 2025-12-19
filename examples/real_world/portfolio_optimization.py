@@ -13,6 +13,7 @@ Common issues:
 
 import cvxpy as cp
 import numpy as np
+
 import cvxpy_debug
 
 
@@ -26,13 +27,15 @@ def example_infeasible_target_return():
     np.random.seed(42)
     n_assets = 5
     expected_returns = np.array([0.05, 0.08, 0.12, 0.06, 0.10])  # 5-12% returns
-    cov_matrix = np.array([
-        [0.04, 0.01, 0.02, 0.01, 0.01],
-        [0.01, 0.09, 0.03, 0.02, 0.02],
-        [0.02, 0.03, 0.16, 0.04, 0.03],
-        [0.01, 0.02, 0.04, 0.05, 0.02],
-        [0.01, 0.02, 0.03, 0.02, 0.08],
-    ])
+    cov_matrix = np.array(
+        [
+            [0.04, 0.01, 0.02, 0.01, 0.01],
+            [0.01, 0.09, 0.03, 0.02, 0.02],
+            [0.02, 0.03, 0.16, 0.04, 0.03],
+            [0.01, 0.02, 0.04, 0.05, 0.02],
+            [0.01, 0.02, 0.03, 0.02, 0.08],
+        ]
+    )
 
     # Portfolio weights
     weights = cp.Variable(n_assets, name="weights")
@@ -41,8 +44,8 @@ def example_infeasible_target_return():
     target_return = 0.20  # 20% - impossible with max single asset return of 12%
 
     constraints = [
-        cp.sum(weights) == 1,           # Fully invested
-        weights >= 0,                   # No short selling
+        cp.sum(weights) == 1,  # Fully invested
+        weights >= 0,  # No short selling
         expected_returns @ weights >= target_return,  # Target return
     ]
 
@@ -56,7 +59,7 @@ def example_infeasible_target_return():
     print(f"  - Max achievable: {max(expected_returns):.0%}")
     print("\nThis is infeasible: target exceeds best single asset return.\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
     print("\nTo fix: Lower target return to at most", f"{max(expected_returns):.0%}")
 
@@ -79,17 +82,14 @@ def example_unbounded_short_selling():
     ]
 
     # Maximize expected return (unbounded!)
-    prob = cp.Problem(
-        cp.Maximize(expected_returns @ weights),
-        constraints
-    )
+    prob = cp.Problem(cp.Maximize(expected_returns @ weights), constraints)
 
     print("\nPortfolio maximizing return without position limits:")
     print("  - Short asset 0 (5% return) infinitely")
     print("  - Long asset 1 (10% return) infinitely")
     print("  - Constraint sum(w) == 1 is satisfied with w0 -> -inf, w1 -> +inf\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
     print("\nTo fix: Add position limits like weights >= -1 or weights >= 0")
 
@@ -127,7 +127,7 @@ def example_ill_conditioned_covariance():
     print("\nThis may cause numerical issues in optimization.\n")
 
     prob.solve()
-    report = cvxpy_debug.debug(prob, include_conditioning=True)
+    cvxpy_debug.debug(prob, include_conditioning=True)
 
 
 def example_efficient_frontier():
@@ -138,12 +138,14 @@ def example_efficient_frontier():
 
     n_assets = 4
     expected_returns = np.array([0.06, 0.10, 0.14, 0.08])
-    cov_matrix = np.array([
-        [0.04, 0.01, 0.02, 0.01],
-        [0.01, 0.09, 0.04, 0.02],
-        [0.02, 0.04, 0.20, 0.05],
-        [0.01, 0.02, 0.05, 0.06],
-    ])
+    cov_matrix = np.array(
+        [
+            [0.04, 0.01, 0.02, 0.01],
+            [0.01, 0.09, 0.04, 0.02],
+            [0.02, 0.04, 0.20, 0.05],
+            [0.01, 0.02, 0.05, 0.06],
+        ]
+    )
 
     weights = cp.Variable(n_assets, name="weights")
     target_return = cp.Parameter(name="target_return")
@@ -202,10 +204,7 @@ def example_robust_portfolio():
 
     # Minimize variance
     cov_matrix = np.diag([0.04, 0.06, 0.10, 0.05])
-    prob = cp.Problem(
-        cp.Minimize(cp.quad_form(weights, cov_matrix)),
-        constraints
-    )
+    prob = cp.Problem(cp.Minimize(cp.quad_form(weights, cov_matrix)), constraints)
 
     print("\nRobust portfolio with uncertainty:")
     print(f"  - Expected returns: {expected_returns}")
@@ -217,7 +216,7 @@ def example_robust_portfolio():
     if target_return > max(expected_returns - return_uncertainty):
         print("This is infeasible: target exceeds best worst-case return.\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
 
 def main():

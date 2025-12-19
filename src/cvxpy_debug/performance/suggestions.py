@@ -1,8 +1,9 @@
 """Generate fix suggestions for performance anti-patterns."""
 
+from __future__ import annotations
+
 from cvxpy_debug.performance.dataclasses import (
     AntiPattern,
-    AntiPatternType,
     MatrixStructure,
     ProblemMetrics,
 )

@@ -2,9 +2,7 @@
 
 import cvxpy as cp
 import numpy as np
-import pytest
 
-import cvxpy_debug
 from cvxpy_debug import debug
 
 
@@ -59,10 +57,7 @@ class TestExtremeCoefficients:
         A = np.array([[1e-15, 1, 1], [1, 1e-15, 1], [1, 1, 1e-15]])
         b = np.ones(3)
 
-        prob = cp.Problem(
-            cp.Minimize(cp.sum(x)),
-            [A @ x <= b, x >= 0]
-        )
+        prob = cp.Problem(cp.Minimize(cp.sum(x)), [A @ x <= b, x >= 0])
         prob.solve()
 
         report = debug(prob)
@@ -77,10 +72,7 @@ class TestExtremeCoefficients:
         A = np.array([[1e6, 1, 1], [1, 1e6, 1], [1, 1, 1e6]])
         b = np.ones(3) * 1e6
 
-        prob = cp.Problem(
-            cp.Minimize(cp.sum(x)),
-            [A @ x <= b, x >= 0]
-        )
+        prob = cp.Problem(cp.Minimize(cp.sum(x)), [A @ x <= b, x >= 0])
 
         try:
             prob.solve()
@@ -98,10 +90,7 @@ class TestExtremeCoefficients:
         A = np.array([[1e-10, 1e10, 1], [1e10, 1e-10, 1], [1, 1, 1]])
         b = np.ones(3)
 
-        prob = cp.Problem(
-            cp.Minimize(cp.sum(x)),
-            [A @ x <= b, x >= 0]
-        )
+        prob = cp.Problem(cp.Minimize(cp.sum(x)), [A @ x <= b, x >= 0])
 
         # Should not crash
         try:
@@ -127,10 +116,7 @@ class TestSpecialValues:
         A[2, 4] = 1
         b = np.ones(3)
 
-        prob = cp.Problem(
-            cp.Minimize(cp.sum(x)),
-            [A @ x <= b, x >= 0]
-        )
+        prob = cp.Problem(cp.Minimize(cp.sum(x)), [A @ x <= b, x >= 0])
         prob.solve()
 
         report = debug(prob)
@@ -144,10 +130,7 @@ class TestSpecialValues:
         A = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=float)
         b = np.array([10, 20, 30], dtype=float)
 
-        prob = cp.Problem(
-            cp.Minimize(cp.sum(x)),
-            [A @ x <= b, x >= 0]
-        )
+        prob = cp.Problem(cp.Minimize(cp.sum(x)), [A @ x <= b, x >= 0])
         prob.solve()
 
         report = debug(prob)
@@ -162,10 +145,7 @@ class TestConstraintVariety:
         """Test problem with only equality constraints."""
         x = cp.Variable(3, name="x")
 
-        prob = cp.Problem(
-            cp.Minimize(cp.sum_squares(x)),
-            [x[0] + x[1] == 1, x[1] + x[2] == 2]
-        )
+        prob = cp.Problem(cp.Minimize(cp.sum_squares(x)), [x[0] + x[1] == 1, x[1] + x[2] == 2])
         prob.solve()
 
         report = debug(prob)
@@ -176,10 +156,7 @@ class TestConstraintVariety:
         """Test problem with only inequality constraints."""
         x = cp.Variable(3, name="x")
 
-        prob = cp.Problem(
-            cp.Minimize(cp.sum(x)),
-            [x >= 0, x <= 10, cp.sum(x) >= 5]
-        )
+        prob = cp.Problem(cp.Minimize(cp.sum(x)), [x >= 0, x <= 10, cp.sum(x) >= 5])
         prob.solve()
 
         report = debug(prob)
@@ -210,10 +187,7 @@ class TestVariableTypes:
         """Test with vector variables."""
         x = cp.Variable(10, name="x")
 
-        prob = cp.Problem(
-            cp.Minimize(cp.norm(x)),
-            [cp.sum(x) == 1, x >= 0]
-        )
+        prob = cp.Problem(cp.Minimize(cp.norm(x)), [cp.sum(x) == 1, x >= 0])
         prob.solve()
 
         report = debug(prob)
@@ -224,10 +198,7 @@ class TestVariableTypes:
         """Test with matrix variables."""
         X = cp.Variable((3, 3), name="X")
 
-        prob = cp.Problem(
-            cp.Minimize(cp.norm(X, "fro")),
-            [cp.sum(X) == 1]
-        )
+        prob = cp.Problem(cp.Minimize(cp.norm(X, "fro")), [cp.sum(X) == 1])
         prob.solve()
 
         report = debug(prob)
@@ -238,10 +209,7 @@ class TestVariableTypes:
         """Test with symmetric matrix variable."""
         X = cp.Variable((3, 3), symmetric=True, name="X")
 
-        prob = cp.Problem(
-            cp.Minimize(cp.trace(X)),
-            [X >> 0, cp.trace(X) >= 1]
-        )
+        prob = cp.Problem(cp.Minimize(cp.trace(X)), [X >> 0, cp.trace(X) >= 1])
         prob.solve()
 
         report = debug(prob)
@@ -255,8 +223,7 @@ class TestVariableTypes:
         Z = cp.Variable((2, 2), symmetric=True, name="Z")
 
         prob = cp.Problem(
-            cp.Minimize(cp.sum(x) + y + cp.trace(Z)),
-            [x >= 0, y >= 0, Z >> 0, cp.sum(x) + y == 5]
+            cp.Minimize(cp.sum(x) + y + cp.trace(Z)), [x >= 0, y >= 0, Z >> 0, cp.sum(x) + y == 5]
         )
         prob.solve()
 
@@ -280,7 +247,7 @@ class TestBoundaryConditions:
                 x[0] >= 33.33,
                 x[1] >= 33.33,
                 x[2] >= 33.33,
-            ]
+            ],
         )
 
         report = debug(prob)
@@ -293,8 +260,7 @@ class TestBoundaryConditions:
 
         # Many redundant constraints
         prob = cp.Problem(
-            cp.Minimize(x),
-            [x >= 0, x >= -1, x >= -2, x >= -10, x <= 100, x <= 50, x <= 10]
+            cp.Minimize(x), [x >= 0, x >= -1, x >= -2, x >= -10, x <= 100, x <= 50, x <= 10]
         )
         prob.solve()
 
@@ -334,7 +300,7 @@ class TestInfeasibilityVariants:
 
         prob = cp.Problem(
             cp.Minimize(cp.sum(x)),
-            [cp.sum(x) <= 10, x >= 5]  # Need 15 but max is 10
+            [cp.sum(x) <= 10, x >= 5],  # Need 15 but max is 10
         )
 
         report = debug(prob)
@@ -361,10 +327,7 @@ class TestUnboundednessVariants:
         x = cp.Variable(2, name="x")
 
         # x[0] is bounded, x[1] is not
-        prob = cp.Problem(
-            cp.Minimize(x[0] + x[1]),
-            [x[0] >= 0]
-        )
+        prob = cp.Problem(cp.Minimize(x[0] + x[1]), [x[0] >= 0])
 
         report = debug(prob)
 

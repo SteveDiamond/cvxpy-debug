@@ -1,5 +1,7 @@
 """Constraint violation analysis for CVXPY problems."""
 
+from __future__ import annotations
+
 import cvxpy as cp
 import numpy as np
 
@@ -67,9 +69,7 @@ def analyze_violations(
                 violation_amount = float(violation_amount)
 
             # Compute relative violation
-            relative_violation = _compute_relative_violation(
-                constraint, violation_amount
-            )
+            relative_violation = _compute_relative_violation(constraint, violation_amount)
 
             exceeds_tolerance = violation_amount > tolerance
 
@@ -95,9 +95,7 @@ def analyze_violations(
     # Compute aggregate statistics
     total_violations = sum(1 for v in violations if v.exceeds_tolerance)
     max_violation = max(violation_amounts) if violation_amounts else 0.0
-    mean_violation = (
-        float(np.mean(violation_amounts)) if violation_amounts else 0.0
-    )
+    mean_violation = float(np.mean(violation_amounts)) if violation_amounts else 0.0
 
     return ViolationAnalysis(
         total_violations=total_violations,
@@ -111,9 +109,17 @@ def analyze_violations(
 def _get_tolerance(tolerances: dict[str, float]) -> float:
     """Get the primary tolerance value from a tolerances dict."""
     # Prefer absolute tolerance keys
-    for key in ["eps_abs", "abstol", "tol_gap_abs", "tol", "default",
-                "primal_feasibility_tolerance", "FeasibilityTol",
-                "feasibility_tolerance", "eps"]:
+    for key in [
+        "eps_abs",
+        "abstol",
+        "tol_gap_abs",
+        "tol",
+        "default",
+        "primal_feasibility_tolerance",
+        "FeasibilityTol",
+        "feasibility_tolerance",
+        "eps",
+    ]:
         if key in tolerances:
             return tolerances[key]
     # Fall back to first value
@@ -122,9 +128,7 @@ def _get_tolerance(tolerances: dict[str, float]) -> float:
     return DEFAULT_TOLERANCE
 
 
-def _compute_relative_violation(
-    constraint: cp.Constraint, violation_amount: float
-) -> float:
+def _compute_relative_violation(constraint: cp.Constraint, violation_amount: float) -> float:
     """
     Compute relative violation as violation / scale.
 

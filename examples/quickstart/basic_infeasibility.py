@@ -10,6 +10,7 @@ the available budget.
 """
 
 import cvxpy as cp
+
 import cvxpy_debug
 
 
@@ -42,7 +43,7 @@ def main():
     print("(50 + 40 + 30 = 120) exceed the budget (100).\n")
 
     # Diagnose the infeasibility
-    report = cvxpy_debug.debug(problem)
+    cvxpy_debug.debug(problem)
 
     # The report shows:
     # 1. Which constraints are conflicting

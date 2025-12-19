@@ -7,7 +7,7 @@ including ray analysis, multi-variable cases, and objective sensitivity.
 """
 
 import cvxpy as cp
-import numpy as np
+
 import cvxpy_debug
 
 
@@ -23,7 +23,7 @@ def example_simple_unbounded():
 
     print("\nMinimize x (no constraints)")
     print("x can decrease to -infinity.\n")
-    report1 = cvxpy_debug.debug(prob_min)
+    cvxpy_debug.debug(prob_min)
 
     print("\n" + "-" * 40)
 
@@ -33,7 +33,7 @@ def example_simple_unbounded():
 
     print("\nMaximize y subject to y >= -10")
     print("y can increase to +infinity.\n")
-    report2 = cvxpy_debug.debug(prob_max)
+    cvxpy_debug.debug(prob_max)
 
 
 def example_multi_variable_unboundedness():
@@ -47,16 +47,13 @@ def example_multi_variable_unboundedness():
 
     # Minimize x[0] - x[1] subject to x[0] + x[1] == 10
     # Both can go to infinity in opposite directions
-    prob = cp.Problem(
-        cp.Minimize(x[0] - x[1]),
-        [x[0] + x[1] == 10]
-    )
+    prob = cp.Problem(cp.Minimize(x[0] - x[1]), [x[0] + x[1] == 10])
 
     print("\nMinimize x[0] - x[1] subject to x[0] + x[1] == 10")
     print("x[0] -> -inf, x[1] -> +inf satisfies constraint")
     print("while driving objective to -infinity.\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
     print("\nThe 'ray' shows the unbounded direction:")
     print("  x[0] decreases (coefficient in objective is +1)")
@@ -79,7 +76,7 @@ def example_partial_bounds():
     print("\nMinimize x + y where x >= 0 (nonneg) but y is free")
     print("x is bounded, but y can go to -infinity.\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
     print("\nThe diagnostic identifies which variables cause unboundedness:")
     print("  x: has lower bound (nonneg=True)")
@@ -98,14 +95,14 @@ def example_objective_sensitivity():
     # Only x[1] appears with negative coefficient (minimize wants it positive)
     prob = cp.Problem(
         cp.Minimize(2 * x[0] - 3 * x[1] + x[2]),
-        [x[0] >= 0, x[2] >= 0]  # x[1] is unbounded
+        [x[0] >= 0, x[2] >= 0],  # x[1] is unbounded
     )
 
     print("\nMinimize 2*x[0] - 3*x[1] + x[2]")
     print("x[0] >= 0, x[2] >= 0, but x[1] is free")
     print("Increasing x[1] decreases objective (coefficient -3).\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
     print("\nObjective sensitivity:")
     print("  x[0]: coefficient +2, bounded below, can't decrease objective")
@@ -126,15 +123,15 @@ def example_constraint_caused_unboundedness():
         cp.Minimize(-x[0] - x[1]),  # Want x[0], x[1] to go to +infinity
         [
             x[0] - x[1] <= 10,  # Difference bounded
-            x[0] + x[1] >= 0,   # Sum bounded below
-        ]
+            x[0] + x[1] >= 0,  # Sum bounded below
+        ],
     )
 
     print("\nMinimize -x[0] - x[1] (maximize sum)")
     print("Constraints: x[0] - x[1] <= 10, x[0] + x[1] >= 0")
     print("The feasible region is unbounded in the (1, 1) direction.\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
 
 def example_vector_unboundedness():
@@ -153,14 +150,14 @@ def example_vector_unboundedness():
             x[0] >= 0,
             x[1] >= 0,
             # x[2], x[3], x[4] are unbounded
-        ]
+        ],
     )
 
     print(f"\nMinimize sum(x) for x with {n} elements")
     print("Only x[0] >= 0 and x[1] >= 0 are constrained.")
     print("x[2], x[3], x[4] can go to -infinity.\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
 
 def main():

@@ -1,5 +1,7 @@
 """Constraint relaxation utilities."""
 
+from __future__ import annotations
+
 import cvxpy as cp
 import numpy as np
 

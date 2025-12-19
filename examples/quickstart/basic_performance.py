@@ -11,6 +11,7 @@ vectorized operations.
 
 import cvxpy as cp
 import numpy as np
+
 import cvxpy_debug
 
 
@@ -39,7 +40,7 @@ def main():
     print("Each constraint created separately in a Python loop.\n")
 
     problem_slow.solve()
-    report_slow = cvxpy_debug.debug(problem_slow)
+    cvxpy_debug.debug(problem_slow)
 
     print("\n" + "=" * 60)
     print("Example 2: Vectorized Constraints (Best Practice)")
@@ -61,7 +62,7 @@ def main():
     print("Single constraint using element-wise operations.\n")
 
     problem_fast.solve()
-    report_fast = cvxpy_debug.debug(problem_fast)
+    cvxpy_debug.debug(problem_fast)
 
     print("\n" + "=" * 60)
     print("Example 3: High Constraint-to-Variable Ratio")
@@ -81,7 +82,7 @@ def main():
     print("High constraint-to-variable ratio may indicate redundancy.\n")
 
     problem_ratio.solve()
-    report_ratio = cvxpy_debug.debug(problem_ratio)
+    cvxpy_debug.debug(problem_ratio)
 
     print("\n" + "=" * 60)
     print("Interpretation")

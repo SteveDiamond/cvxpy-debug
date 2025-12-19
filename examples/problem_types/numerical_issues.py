@@ -9,6 +9,7 @@ solver-specific recommendations.
 
 import cvxpy as cp
 import numpy as np
+
 import cvxpy_debug
 
 
@@ -30,16 +31,13 @@ def example_extreme_scaling():
 
     b = np.ones(n)
 
-    prob = cp.Problem(
-        cp.Minimize(cp.sum(x)),
-        [A @ x <= b, x >= 0]
-    )
+    prob = cp.Problem(cp.Minimize(cp.sum(x)), [A @ x <= b, x >= 0])
 
     print("\nProblem with coefficient matrix spanning 1e-5 to 1e4")
     print("This 9 orders of magnitude range causes numerical issues.\n")
 
     prob.solve()
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
 
 def example_ill_conditioned():
@@ -60,16 +58,13 @@ def example_ill_conditioned():
 
     b = np.ones(n)
 
-    prob = cp.Problem(
-        cp.Minimize(cp.sum(x)),
-        [A @ x == b, x >= -10, x <= 10]
-    )
+    prob = cp.Problem(cp.Minimize(cp.sum(x)), [A @ x == b, x >= -10, x <= 10])
 
     print("\nProblem with ill-conditioned matrix (condition number ~ 1e4)")
     print("High condition numbers amplify floating-point errors.\n")
 
     prob.solve()
-    report = cvxpy_debug.debug(prob, include_conditioning=True)
+    cvxpy_debug.debug(prob, include_conditioning=True)
 
 
 def example_constraint_violations():
@@ -86,16 +81,13 @@ def example_constraint_violations():
     A = np.random.randn(n, n) * 100
     b = np.random.randn(n) * 100
 
-    prob = cp.Problem(
-        cp.Minimize(cp.sum_squares(x)),
-        [A @ x == b]
-    )
+    prob = cp.Problem(cp.Minimize(cp.sum_squares(x)), [A @ x == b])
 
     print("\nLeast squares with equality constraints")
     print("Checking if the solution satisfies constraints within tolerance.\n")
 
     prob.solve()
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
     print("\nThe violation analysis shows:")
     print("  - Maximum constraint violation")
@@ -118,16 +110,13 @@ def example_solver_comparison():
     A = A @ A.T + 0.1 * np.eye(n)  # Make positive definite
     c = np.random.randn(n)
 
-    prob = cp.Problem(
-        cp.Minimize(0.5 * cp.quad_form(x, A) + c @ x),
-        [cp.sum(x) == 1, x >= 0]
-    )
+    prob = cp.Problem(cp.Minimize(0.5 * cp.quad_form(x, A) + c @ x), [cp.sum(x) == 1, x >= 0])
 
     print("\nQuadratic program solved with default solver")
     print("The diagnostic extracts solver-specific statistics.\n")
 
     prob.solve()
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
 
 def example_near_infeasibility():
@@ -153,7 +142,7 @@ def example_near_infeasibility():
     print("Near-infeasible problems can have numerical sensitivity.\n")
 
     prob.solve()
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
 
 def example_recommended_rescaling():
@@ -171,7 +160,7 @@ def example_recommended_rescaling():
 
     print("\nOriginal problem with coefficients from 1e-6 to 1e6:")
     prob_bad.solve()
-    report_bad = cvxpy_debug.debug(prob_bad)
+    cvxpy_debug.debug(prob_bad)
 
     print("\n" + "-" * 40)
     print("Rescaled Problem:")
@@ -184,14 +173,11 @@ def example_recommended_rescaling():
     b_scaled = b / row_scales
 
     y = cp.Variable(2, name="y")
-    prob_good = cp.Problem(
-        cp.Minimize(cp.sum(y)),
-        [A_scaled @ y <= b_scaled, y >= 0]
-    )
+    prob_good = cp.Problem(cp.Minimize(cp.sum(y)), [A_scaled @ y <= b_scaled, y >= 0])
 
     print("\nRescaled so each row has max coefficient = 1:")
     prob_good.solve()
-    report_good = cvxpy_debug.debug(prob_good)
+    cvxpy_debug.debug(prob_good)
 
     print("\nRescaling improved the coefficient range from 1e12 to ~1.")
 

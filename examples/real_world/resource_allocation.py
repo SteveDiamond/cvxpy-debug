@@ -13,6 +13,7 @@ Common issues:
 
 import cvxpy as cp
 import numpy as np
+
 import cvxpy_debug
 
 
@@ -48,7 +49,7 @@ def example_budget_allocation():
     print(f"Minimum requirements: ${sum(min_allocations):,}")
     print(f"Shortfall: ${sum(min_allocations) - total_budget:,}\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
     print("\nThe diagnostic shows which minimums conflict with budget.")
     print("Options: increase budget, reduce minimums, or eliminate a department.")
@@ -66,11 +67,13 @@ def example_capacity_planning():
     production = cp.Variable(n_products, nonneg=True, name="production")
 
     # Machine hours required per product
-    machine_hours = np.array([
-        [2, 3, 1, 4],  # Machine 1
-        [1, 2, 3, 2],  # Machine 2
-        [3, 1, 2, 1],  # Machine 3
-    ])
+    machine_hours = np.array(
+        [
+            [2, 3, 1, 4],  # Machine 1
+            [1, 2, 3, 2],  # Machine 2
+            [3, 1, 2, 1],  # Machine 3
+        ]
+    )
 
     # Available hours per machine
     available_hours = np.array([100, 80, 90])
@@ -100,7 +103,7 @@ def example_capacity_planning():
     if any(min_hours_needed > available_hours):
         print("\nInfeasible: not enough capacity for minimum demand.\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
 
 def example_workforce_scheduling():
@@ -122,13 +125,15 @@ def example_workforce_scheduling():
     skills = np.random.randint(0, 5, (n_employees, n_skills))
 
     # Minimum skill requirement per shift
-    min_skill_per_shift = np.array([
-        [8, 6, 10],  # Shift 1 needs high skill 3
-        [5, 8, 5],   # Shift 2 needs high skill 2
-        [10, 5, 5],  # Shift 3 needs high skill 1
-        [6, 6, 6],   # Shift 4 balanced
-        [12, 8, 10], # Shift 5 needs lots of everything
-    ])
+    min_skill_per_shift = np.array(
+        [
+            [8, 6, 10],  # Shift 1 needs high skill 3
+            [5, 8, 5],  # Shift 2 needs high skill 2
+            [10, 5, 5],  # Shift 3 needs high skill 1
+            [6, 6, 6],  # Shift 4 balanced
+            [12, 8, 10],  # Shift 5 needs lots of everything
+        ]
+    )
 
     constraints = [
         # Each employee works at most one shift
@@ -141,9 +146,7 @@ def example_workforce_scheduling():
     for j in range(n_shifts):
         for k in range(n_skills):
             # Total skill k in shift j must meet requirement
-            constraints.append(
-                skills[:, k] @ assignment[:, j] >= min_skill_per_shift[j, k]
-            )
+            constraints.append(skills[:, k] @ assignment[:, j] >= min_skill_per_shift[j, k])
 
     # Minimize total overtime (assume assignment > 0.5 means overtime)
     prob = cp.Problem(cp.Minimize(cp.sum(assignment)), constraints)
@@ -151,9 +154,9 @@ def example_workforce_scheduling():
     print(f"\nScheduling {n_employees} employees across {n_shifts} shifts")
     print(f"Each shift needs minimum skills: {min_skill_per_shift[4]} (shift 5)")
     print(f"Total skill available: {skills.sum(axis=0)}")
-    print(f"\nShift 5 may be infeasible if skill requirements are too high.\n")
+    print("\nShift 5 may be infeasible if skill requirements are too high.\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
 
 def example_multi_period_planning():
@@ -172,12 +175,14 @@ def example_multi_period_planning():
     period_budgets = np.array([100, 80, 60, 40])
 
     # Minimum requirements per period (increasing)
-    min_requirements = np.array([
-        [20, 20, 20],  # Period 1
-        [30, 25, 25],  # Period 2
-        [40, 35, 30],  # Period 3
-        [50, 40, 35],  # Period 4 - high requirements, low budget
-    ])
+    min_requirements = np.array(
+        [
+            [20, 20, 20],  # Period 1
+            [30, 25, 25],  # Period 2
+            [40, 35, 30],  # Period 3
+            [50, 40, 35],  # Period 4 - high requirements, low budget
+        ]
+    )
 
     constraints = []
     for t in range(n_periods):
@@ -195,7 +200,7 @@ def example_multi_period_planning():
 
     print("\nPeriod 4 is infeasible: requirements (125) exceed budget (40).\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
 
 def example_fair_allocation():
@@ -228,7 +233,7 @@ def example_fair_allocation():
     if n_groups * min_per_group > total_resources:
         print(f"\nInfeasible: {n_groups * min_per_group} > {total_resources}\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
 
 def main():

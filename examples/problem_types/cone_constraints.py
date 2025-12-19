@@ -8,6 +8,7 @@ with non-linear cone constraints: SOC, PSD, and exponential cones.
 
 import cvxpy as cp
 import numpy as np
+
 import cvxpy_debug
 
 
@@ -25,8 +26,8 @@ def example_soc_infeasibility():
     # norm(x) >= |x[0]| >= 2, but t <= 1, so norm(x) <= 1 < 2
     constraints = [
         cp.norm(x) <= t,  # SOC constraint
-        t <= 1,           # Upper bound on t
-        x[0] >= 2,        # Forces norm(x) >= 2
+        t <= 1,  # Upper bound on t
+        x[0] >= 2,  # Forces norm(x) >= 2
     ]
 
     prob = cp.Problem(cp.Minimize(t), constraints)
@@ -37,7 +38,7 @@ def example_soc_infeasibility():
     print("  - x[0] >= 2")
     print("This is infeasible: norm(x) >= |x[0]| >= 2 > 1 >= t\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
 
 def example_soc_feasibility_boundary():
@@ -67,7 +68,7 @@ def example_soc_feasibility_boundary():
     print(f"Optimal t = {t.value:.4f}")
     print(f"norm(x) = {np.linalg.norm(x.value):.4f}\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
 
 def example_psd_infeasibility():
@@ -91,7 +92,7 @@ def example_psd_infeasibility():
     print("  - X[0,0] <= -1")
     print("This is infeasible: PSD diagonal must be non-negative.\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
 
 def example_psd_eigenvalue_constraint():
@@ -106,7 +107,7 @@ def example_psd_eigenvalue_constraint():
     # Want minimum eigenvalue >= 1, but trace <= 1
     # For n=3, if all eigenvalues >= 1, trace >= 3
     constraints = [
-        X >> np.eye(n),   # X - I is PSD, so min eigenvalue >= 1
+        X >> np.eye(n),  # X - I is PSD, so min eigenvalue >= 1
         cp.trace(X) <= 1,  # But trace = sum of eigenvalues <= 1
     ]
 
@@ -117,7 +118,7 @@ def example_psd_eigenvalue_constraint():
     print("  - trace(X) <= 1")
     print(f"Infeasible: if min eigenvalue >= 1, trace >= {n}\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
 
 def example_multiple_psd_constraints():
@@ -150,7 +151,7 @@ def example_multiple_psd_constraints():
     print("  - X[0,0] >= 2, Y[0,0] >= 2")
     print("Infeasible: X[0,0] + Y[0,0] >= 4 but (X+Y)[0,0] = 1\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
 
 def example_exp_cone():
@@ -180,7 +181,7 @@ def example_exp_cone():
     print("  - t <= 5")
     print("Infeasible: log_sum_exp(x) > 11 but t <= 5\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
 
 def example_mixed_cones():
@@ -213,7 +214,7 @@ def example_mixed_cones():
     print("  - sum(x) = trace(X)")
     print("Conflict: sum(x) >= 10 implies norm(x) >= 10/sqrt(3) > 1 >= t\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
 
 def main():

@@ -34,12 +34,13 @@ dev = [
     "pytest>=7.0",
     "pytest-cov",
     "ruff",
-    "mypy",
+    "pyright",
+    "pre-commit",
 ]
 
 [project.urls]
-Homepage = "https://github.com/SteveDiaworern/cvxpy-debug"
-Repository = "https://github.com/SteveDiaworern/cvxpy-debug"
+Homepage = "https://github.com/SteveDiamond/cvxpy-debug"
+Repository = "https://github.com/SteveDiamond/cvxpy-debug"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/cvxpy_debug"]
@@ -55,7 +56,8 @@ select = ["E", "F", "I", "W"]
 testpaths = ["tests"]
 addopts = "-v"
 
-[tool.mypy]
-python_version = "3.9"
-warn_return_any = true
-warn_unused_configs = true
+[tool.pyright]
+pythonVersion = "3.9"
+typeCheckingMode = "basic"
+exclude = ["examples"]
+reportMissingImports = false

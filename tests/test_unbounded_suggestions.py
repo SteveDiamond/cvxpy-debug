@@ -1,7 +1,6 @@
 """Tests for unbounded suggestions generation."""
 
 import cvxpy as cp
-import pytest
 
 from cvxpy_debug.unbounded.ray import UnboundedRay
 from cvxpy_debug.unbounded.suggestions import (
@@ -214,6 +213,7 @@ class TestShouldSuggestNonneg:
 
         # Should not suggest nonneg when problem is about upper bound
         # and variable is already nonneg
+        assert result is not None  # Function returns a value
 
 
 class TestGetVarName:
@@ -265,8 +265,9 @@ class TestIsNonneg:
         x = cp.Variable(pos=True, name="x")
 
         # pos is different from nonneg in strictness
-        result = _is_nonneg(x)
         # Implementation may or may not consider pos as nonneg
+        result = _is_nonneg(x)
+        assert isinstance(result, bool)
 
 
 class TestSuggestionsIntegration:

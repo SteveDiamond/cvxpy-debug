@@ -1,5 +1,7 @@
 """Solver recommendations for CVXPY problems."""
 
+from __future__ import annotations
+
 from typing import Any
 
 import cvxpy as cp
@@ -60,9 +62,7 @@ def generate_recommendations(
     for priority, solver_name in enumerate(compatible_solvers):
         is_installed = solver_name in slv_def.INSTALLED_SOLVERS
         reason = _get_solver_reason(solver_name, problem)
-        param_adjustments = _get_parameter_adjustments(
-            solver_name, solver_stats, violations
-        )
+        param_adjustments = _get_parameter_adjustments(solver_name, solver_stats, violations)
 
         recommendations.append(
             SolverRecommendation(
@@ -117,12 +117,8 @@ def _get_compatible_solvers(
     except Exception:
         # Fall back to all installed solvers
         candidates = {
-            "qp_solvers": [
-                s for s in slv_def.INSTALLED_SOLVERS if s in slv_def.QP_SOLVERS
-            ],
-            "conic_solvers": [
-                s for s in slv_def.INSTALLED_SOLVERS if s in slv_def.CONIC_SOLVERS
-            ],
+            "qp_solvers": [s for s in slv_def.INSTALLED_SOLVERS if s in slv_def.QP_SOLVERS],
+            "conic_solvers": [s for s in slv_def.INSTALLED_SOLVERS if s in slv_def.CONIC_SOLVERS],
         }
 
     # Sort according to CVXPY's priority ordering
@@ -132,9 +128,7 @@ def _get_compatible_solvers(
     )
     conic_solvers = sorted(
         candidates.get("conic_solvers", []),
-        key=lambda s: (
-            slv_def.CONIC_SOLVERS.index(s) if s in slv_def.CONIC_SOLVERS else 999
-        ),
+        key=lambda s: (slv_def.CONIC_SOLVERS.index(s) if s in slv_def.CONIC_SOLVERS else 999),
     )
 
     # Determine which list to prefer based on problem type
@@ -187,7 +181,7 @@ def _get_solver_reason(solver_name: str, problem: cp.Problem) -> str:
         "DAQP": "Dual active-set QP solver",
     }
 
-    return reasons.get(solver_upper, f"Alternative solver option")
+    return reasons.get(solver_upper, "Alternative solver option")
 
 
 def _get_parameter_adjustments(

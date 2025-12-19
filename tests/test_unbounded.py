@@ -1,7 +1,6 @@
 """Tests for unboundedness diagnosis."""
 
 import cvxpy as cp
-import pytest
 
 import cvxpy_debug
 from cvxpy_debug.unbounded.bounds import (

@@ -9,6 +9,7 @@ The classic example: minimize a variable with no lower bound.
 """
 
 import cvxpy as cp
+
 import cvxpy_debug
 
 
@@ -26,7 +27,7 @@ def main():
     print("This is unbounded because x can decrease to -infinity.\n")
 
     # Diagnose the unboundedness
-    report = cvxpy_debug.debug(problem)
+    cvxpy_debug.debug(problem)
 
     print("\n" + "=" * 60)
     print("Example 2: Unbounded Maximization")
@@ -40,7 +41,7 @@ def main():
     print("\nProblem: maximize y subject to y >= 0")
     print("This is unbounded because y can increase to +infinity.\n")
 
-    report2 = cvxpy_debug.debug(problem2)
+    cvxpy_debug.debug(problem2)
 
     print("\n" + "=" * 60)
     print("Example 3: Multi-Variable Unboundedness")
@@ -49,16 +50,13 @@ def main():
     # Minimize x[0] - x[1] with constraint x[0] + x[1] == 1
     # x[1] can go to +inf while x[0] goes to -inf (objective decreases)
     z = cp.Variable(2, name="z")
-    problem3 = cp.Problem(
-        cp.Minimize(z[0] - z[1]),
-        [z[0] + z[1] == 1]
-    )
+    problem3 = cp.Problem(cp.Minimize(z[0] - z[1]), [z[0] + z[1] == 1])
 
     print("\nProblem: minimize z[0] - z[1] subject to z[0] + z[1] == 1")
     print("Unbounded: z[1] -> +inf, z[0] -> -inf keeps constraint satisfied")
     print("while objective z[0] - z[1] -> -infinity.\n")
 
-    report3 = cvxpy_debug.debug(problem3)
+    cvxpy_debug.debug(problem3)
 
     print("\n" + "=" * 60)
     print("Interpretation")

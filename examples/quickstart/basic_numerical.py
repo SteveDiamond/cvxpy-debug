@@ -10,6 +10,7 @@ The classic example: coefficients that vary by many orders of magnitude.
 
 import cvxpy as cp
 import numpy as np
+
 import cvxpy_debug
 
 
@@ -23,11 +24,13 @@ def main():
     x = cp.Variable(3, name="x")
 
     # Coefficients range from 1e-8 to 1e8 - very bad scaling!
-    A = np.array([
-        [1e8, 1e-8, 1.0],
-        [1e-8, 1e8, 1.0],
-        [1.0, 1.0, 1e8],
-    ])
+    A = np.array(
+        [
+            [1e8, 1e-8, 1.0],
+            [1e-8, 1e8, 1.0],
+            [1.0, 1.0, 1e8],
+        ]
+    )
     b = np.array([1e8, 1e8, 1e8])
 
     constraints = [A @ x <= b, x >= 0]
@@ -39,7 +42,7 @@ def main():
 
     # Solve and diagnose
     problem.solve()
-    report = cvxpy_debug.debug(problem)
+    cvxpy_debug.debug(problem)
 
     print("\n" + "=" * 60)
     print("Example 2: Well-Scaled Problem (for comparison)")
@@ -49,11 +52,13 @@ def main():
     y = cp.Variable(3, name="y")
 
     # Coefficients all around 1.0 - good scaling
-    A_good = np.array([
-        [1.0, 0.5, 0.3],
-        [0.5, 1.0, 0.4],
-        [0.3, 0.4, 1.0],
-    ])
+    A_good = np.array(
+        [
+            [1.0, 0.5, 0.3],
+            [0.5, 1.0, 0.4],
+            [0.3, 0.4, 1.0],
+        ]
+    )
     b_good = np.array([1.0, 1.0, 1.0])
 
     constraints_good = [A_good @ y <= b_good, y >= 0]
@@ -64,7 +69,7 @@ def main():
     print("Well-scaled problems are more numerically stable.\n")
 
     problem_good.solve()
-    report_good = cvxpy_debug.debug(problem_good)
+    cvxpy_debug.debug(problem_good)
 
     print("\n" + "=" * 60)
     print("Interpretation")

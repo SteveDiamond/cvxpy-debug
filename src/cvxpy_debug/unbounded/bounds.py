@@ -1,5 +1,7 @@
 """Analyze variable bounds from constraints."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Any
 
@@ -129,9 +131,7 @@ def analyze_variable_bounds(problem: cp.Problem) -> dict[int, BoundInfo]:
     return bounds
 
 
-def _extract_bound_from_constraint(
-    constraint: cp.Constraint, var: cp.Variable
-) -> dict | None:
+def _extract_bound_from_constraint(constraint: cp.Constraint, var: cp.Variable) -> dict | None:
     """
     Try to extract a bound on var from a constraint.
 
@@ -153,15 +153,7 @@ def _extract_bound_from_constraint(
         Dictionary with 'type' ('lower', 'upper', or 'both') and 'value',
         or None if no bound can be extracted.
     """
-    # Handle different constraint types
-    # Note: CVXPY uses different classes in different modules
-    try:
-        from cvxpy.constraints.zero import Equality, Zero
-        from cvxpy.constraints.nonpos import Inequality, NonNeg, NonPos
-    except ImportError:
-        # Fallback for different CVXPY versions
-        pass
-
+    # Handle different constraint types by name (works across CVXPY versions)
     constraint_type = type(constraint).__name__
 
     if constraint_type == "Equality" or constraint_type == "Zero":
@@ -176,9 +168,7 @@ def _extract_bound_from_constraint(
     return None
 
 
-def _check_equality_bound(
-    constraint: cp.Constraint, var: cp.Variable
-) -> dict | None:
+def _check_equality_bound(constraint: cp.Constraint, var: cp.Variable) -> dict | None:
     """Check if equality constraint gives bound on var."""
     expr = constraint.args[0]
 
@@ -191,9 +181,7 @@ def _check_equality_bound(
     return None
 
 
-def _check_inequality_bound(
-    constraint: cp.Constraint, var: cp.Variable
-) -> dict | None:
+def _check_inequality_bound(constraint: cp.Constraint, var: cp.Variable) -> dict | None:
     """Check if inequality constraint gives bound on var (expr <= 0 form)."""
     expr = constraint.args[0]
 
@@ -206,9 +194,7 @@ def _check_inequality_bound(
     return None
 
 
-def _check_nonpos_bound(
-    constraint: cp.Constraint, var: cp.Variable
-) -> dict | None:
+def _check_nonpos_bound(constraint: cp.Constraint, var: cp.Variable) -> dict | None:
     """Check NonPos constraint (expr <= 0)."""
     expr = constraint.args[0]
 
@@ -220,9 +206,7 @@ def _check_nonpos_bound(
     return None
 
 
-def _check_nonneg_bound(
-    constraint: cp.Constraint, var: cp.Variable
-) -> dict | None:
+def _check_nonneg_bound(constraint: cp.Constraint, var: cp.Variable) -> dict | None:
     """Check NonNeg constraint (expr >= 0)."""
     expr = constraint.args[0]
 
@@ -252,10 +236,6 @@ def _extract_constant_bound(expr: cp.Expression, var: cp.Variable) -> float | No
         # Get coefficients - this is a simplified approach
         # For scalar var, check if expression is simply var - c or c - var
         if var.is_scalar():
-            # Try to evaluate with var=0 and var=1 to get coefficients
-            var_copy = cp.Variable(var.shape)
-            test_expr = expr
-
             # This is a heuristic - works for simple cases
             if hasattr(expr, "args") and len(expr.args) == 2:
                 # Binary operation like add/sub

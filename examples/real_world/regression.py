@@ -13,6 +13,7 @@ Common issues:
 
 import cvxpy as cp
 import numpy as np
+
 import cvxpy_debug
 
 
@@ -27,13 +28,15 @@ def example_badly_scaled_features():
     n_features = 5
 
     # Features with very different scales
-    X = np.column_stack([
-        np.random.randn(n_samples) * 1e-6,   # Very small
-        np.random.randn(n_samples) * 1,       # Normal
-        np.random.randn(n_samples) * 1e3,     # Large
-        np.random.randn(n_samples) * 1e6,     # Very large
-        np.random.randn(n_samples) * 1e-3,    # Small
-    ])
+    X = np.column_stack(
+        [
+            np.random.randn(n_samples) * 1e-6,  # Very small
+            np.random.randn(n_samples) * 1,  # Normal
+            np.random.randn(n_samples) * 1e3,  # Large
+            np.random.randn(n_samples) * 1e6,  # Very large
+            np.random.randn(n_samples) * 1e-3,  # Small
+        ]
+    )
 
     # True coefficients (all around 1)
     true_beta = np.array([1.0, 1.0, 1.0, 1.0, 1.0])
@@ -50,7 +53,7 @@ def example_badly_scaled_features():
     print("\nThis can cause numerical issues in the solver.\n")
 
     prob.solve()
-    report = cvxpy_debug.debug(prob, include_conditioning=True)
+    cvxpy_debug.debug(prob, include_conditioning=True)
 
     print("\n" + "-" * 40)
     print("Better: Standardized Features")
@@ -68,7 +71,7 @@ def example_badly_scaled_features():
 
     print("\nStandardized features (mean=0, std=1)")
     prob_std.solve()
-    report_std = cvxpy_debug.debug(prob_std)
+    cvxpy_debug.debug(prob_std)
 
 
 def example_constrained_regression():
@@ -95,7 +98,7 @@ def example_constrained_regression():
     # Additional constraint that conflicts
     constraints = [
         cp.sum(beta) >= 5,  # Sum must be at least 5
-        beta <= 1,          # Each coefficient at most 1
+        beta <= 1,  # Each coefficient at most 1
     ]
 
     prob = cp.Problem(cp.Minimize(cp.sum_squares(residuals)), constraints)
@@ -105,9 +108,9 @@ def example_constrained_regression():
     print("  - sum(beta) >= 5")
     print("  - beta <= 1 (each)")
     print(f"\nWith {n_features} coefficients, max sum is {n_features}")
-    print(f"But sum(beta) >= 5 requires 5. Infeasible if n_features < 5.\n")
+    print("But sum(beta) >= 5 requires 5. Infeasible if n_features < 5.\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
 
 def example_ridge_with_equality():
@@ -141,7 +144,7 @@ def example_ridge_with_equality():
     print("The regularization pulls beta toward 0")
     print("But equality constraints may require large beta values.\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
 
 def example_lasso_infeasibility():
@@ -178,7 +181,7 @@ def example_lasso_infeasibility():
     print("\nThese goals conflict - solution will be at constraint boundary.\n")
 
     prob.solve()
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
     if beta.value is not None:
         print(f"\nSolution: {np.sum(np.abs(beta.value) < 0.6)} coefficients near lower bound")
@@ -217,8 +220,8 @@ def example_quantile_regression():
 
     # But also add conflicting constraints
     constraints = [
-        beta_25[1] >= 1.0,   # 25th quantile has steep slope
-        beta_75[1] <= 0.3,   # 75th quantile has shallow slope
+        beta_25[1] >= 1.0,  # 25th quantile has steep slope
+        beta_75[1] <= 0.3,  # 75th quantile has shallow slope
         # This causes crossing!
     ]
 
@@ -229,7 +232,7 @@ def example_quantile_regression():
     print("  - 75th percentile slope <= 0.3")
     print("\nThese constraints cause quantiles to cross (infeasible).\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
 
 def example_robust_regression():
@@ -268,7 +271,7 @@ def example_robust_regression():
     print("  - Constraint: |residual| <= 2 for all points")
     print("\nCannot fit outliers within residual bound - infeasible.\n")
 
-    report = cvxpy_debug.debug(prob)
+    cvxpy_debug.debug(prob)
 
 
 def main():

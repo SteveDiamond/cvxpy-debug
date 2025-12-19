@@ -1,7 +1,6 @@
 """Tests for unbounded ray analysis."""
 
 import cvxpy as cp
-import numpy as np
 import pytest
 
 from cvxpy_debug.unbounded.ray import (
@@ -309,10 +308,7 @@ class TestRayIntegration:
         x = cp.Variable(2, name="x")
 
         # x[0] + x[1] == 1 doesn't bound individual variables
-        prob = cp.Problem(
-            cp.Minimize(x[0] - x[1]),
-            [x[0] + x[1] == 1]
-        )
+        prob = cp.Problem(cp.Minimize(x[0] - x[1]), [x[0] + x[1] == 1])
 
         ray = find_unbounded_ray(prob)
 

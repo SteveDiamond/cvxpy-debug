@@ -1,5 +1,7 @@
 """IIS (Irreducible Infeasible Subsystem) refinement algorithms."""
 
+from __future__ import annotations
+
 from typing import Any
 
 import cvxpy as cp
@@ -155,8 +157,6 @@ def find_all_iis(
         # Remove one constraint from this IIS to find other IIS
         # We remove the first one; could be smarter about this
         constraint_to_remove = iis[0]
-        remaining_constraints = [
-            c for c in remaining_constraints if c is not constraint_to_remove
-        ]
+        remaining_constraints = [c for c in remaining_constraints if c is not constraint_to_remove]
 
     return all_iis

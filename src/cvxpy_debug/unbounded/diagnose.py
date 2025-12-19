@@ -1,5 +1,7 @@
 """Main unboundedness diagnosis orchestration."""
 
+from __future__ import annotations
+
 from typing import Any
 
 import cvxpy as cp
@@ -64,15 +66,12 @@ def debug_unboundedness(
                 idx = None
                 dir_str = "above" if direction > 0 else "below"
 
-            unbounded_info.append(
-                format_unbounded_variable_info(var, dir_str, idx)
-            )
+            unbounded_info.append(format_unbounded_variable_info(var, dir_str, idx))
         report.unbounded_variables = unbounded_info
     elif unbounded_vars:
         # Fall back to static bound analysis
         report.unbounded_variables = [
-            format_unbounded_variable_info(var, direction)
-            for var, direction in unbounded_vars
+            format_unbounded_variable_info(var, direction) for var, direction in unbounded_vars
         ]
     else:
         report.unbounded_variables = []
@@ -96,7 +95,6 @@ def _generate_findings(
     is_minimize = isinstance(problem.objective, cp.Minimize)
 
     # Main finding
-    n_vars = len(problem.variables())
     if ray and ray.variables:
         n_unbounded = len(ray.variables)
     else:
@@ -114,13 +112,9 @@ def _generate_findings(
             report.add_finding(analysis["explanation"])
     else:
         if is_minimize:
-            report.add_finding(
-                "The objective can decrease without bound."
-            )
+            report.add_finding("The objective can decrease without bound.")
         else:
-            report.add_finding(
-                "The objective can increase without bound."
-            )
+            report.add_finding("The objective can increase without bound.")
 
     # Specific variable findings
     if ray and ray.variables:
@@ -133,13 +127,9 @@ def _generate_findings(
                 var_name = _get_var_name(var)
 
             if direction > 0:
-                report.add_finding(
-                    f"No constraint limits '{var_name}' from above."
-                )
+                report.add_finding(f"No constraint limits '{var_name}' from above.")
             else:
-                report.add_finding(
-                    f"No constraint limits '{var_name}' from below."
-                )
+                report.add_finding(f"No constraint limits '{var_name}' from below.")
 
 
 def _get_var_name(var: cp.Variable, idx: tuple | None = None) -> str:

@@ -1,7 +1,7 @@
 """Pytest configuration and fixtures."""
 
-import pytest
 import cvxpy as cp
+import pytest
 
 
 @pytest.fixture
@@ -159,14 +159,12 @@ def empty_constraints():
 def well_scaled_problem():
     """A well-scaled optimization problem."""
     import numpy as np
+
     np.random.seed(42)
     x = cp.Variable(5, name="x")
     A = np.random.randn(3, 5)
     b = np.random.randn(3)
-    prob = cp.Problem(
-        cp.Minimize(cp.sum_squares(x)),
-        [A @ x <= b, x >= -1, x <= 1]
-    )
+    prob = cp.Problem(cp.Minimize(cp.sum_squares(x)), [A @ x <= b, x >= -1, x <= 1])
     return prob
 
 
@@ -174,14 +172,12 @@ def well_scaled_problem():
 def badly_scaled_problem():
     """A badly-scaled optimization problem."""
     import numpy as np
+
     x = cp.Variable(3, name="x")
     # Coefficients spanning many orders of magnitude
     A = np.array([[1e8, 1e-8, 1], [1e-8, 1e8, 1], [1, 1, 1e8]])
     b = np.array([1e8, 1e8, 1e8])
-    prob = cp.Problem(
-        cp.Minimize(cp.sum(x)),
-        [A @ x <= b, x >= 0]
-    )
+    prob = cp.Problem(cp.Minimize(cp.sum(x)), [A @ x <= b, x >= 0])
     return prob
 
 
@@ -191,8 +187,10 @@ def multi_iis_problem():
     x = cp.Variable(name="x")
     y = cp.Variable(name="y")
     constraints = [
-        x >= 10, x <= 5,  # First IIS
-        y >= 20, y <= 15,  # Second IIS
+        x >= 10,
+        x <= 5,  # First IIS
+        y >= 20,
+        y <= 15,  # Second IIS
     ]
     prob = cp.Problem(cp.Minimize(x + y), constraints)
     return prob
@@ -202,6 +200,7 @@ def multi_iis_problem():
 def loop_constraints_problem():
     """Problem with loop-generated constraints (performance anti-pattern)."""
     import numpy as np
+
     np.random.seed(42)
     n = 20
     x = cp.Variable(n, name="x")
