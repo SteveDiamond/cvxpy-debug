@@ -1,6 +1,10 @@
 """Debug report class and formatting."""
 
-from dataclasses import dataclass, field
+from __future__ import annotations
+
+import json
+from dataclasses import asdict, dataclass, field, is_dataclass
+from enum import Enum
 from typing import Any
 
 import cvxpy as cp
@@ -62,6 +66,83 @@ class DebugReport:
     def __str__(self) -> str:
         """Format report as string for terminal output."""
         return format_report(self)
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Convert report to a JSON-serializable dictionary.
+
+        Returns
+        -------
+        dict
+            Dictionary representation of the report suitable for JSON serialization.
+            The 'problem' field is omitted as cp.Problem is not serializable.
+        """
+        return {
+            "status": self.status,
+            "iis": [_serialize_constraint(c) for c in self.iis],
+            "slack_values": {_serialize_constraint(k): v for k, v in self.slack_values.items()}
+            if self.slack_values
+            else {},
+            "constraint_info": self.constraint_info,  # Already dicts
+            "findings": self.findings,
+            "suggestions": self.suggestions,
+            "unbounded_variables": self.unbounded_variables,  # Already dicts
+            "unbounded_ray": _serialize_value(self.unbounded_ray),
+            "numerical_analysis": _serialize_dataclass(self.numerical_analysis),
+            "performance_analysis": _serialize_dataclass(self.performance_analysis),
+        }
+
+    def to_json(self, indent: int | None = 2) -> str:
+        """
+        Convert report to a JSON string.
+
+        Parameters
+        ----------
+        indent : int | None, optional
+            Indentation level for pretty-printing. Default is 2.
+            Use None for compact output.
+
+        Returns
+        -------
+        str
+            JSON string representation of the report.
+        """
+        return json.dumps(self.to_dict(), indent=indent, default=str)
+
+    def to_html(self, file: str | None = None) -> str:
+        """
+        Convert report to an HTML string.
+
+        Parameters
+        ----------
+        file : str | None, optional
+            If provided, save the HTML to this file path.
+
+        Returns
+        -------
+        str
+            HTML string representation of the report.
+        """
+        from cvxpy_debug.report.html import render_html, save_html
+
+        html_content = render_html(self)
+        if file is not None:
+            save_html(self, file)
+        return html_content
+
+    def _repr_html_(self) -> str:
+        """
+        HTML representation for Jupyter notebooks.
+
+        This method is automatically called by Jupyter when displaying
+        a DebugReport object in a cell.
+
+        Returns
+        -------
+        str
+            HTML string for Jupyter display.
+        """
+        return self.to_html()
 
 
 def format_report(report: DebugReport) -> str:
@@ -158,3 +239,77 @@ def _format_unbounded_table(unbounded_variables: list) -> str:
         lines.append(f"  {name:<18}  {direction_sym}")
 
     return "\n".join(lines)
+
+
+# --- Serialization helpers ---
+
+
+def _serialize_constraint(constraint: Any) -> str:
+    """Convert a CVXPY constraint to a string representation."""
+    if constraint is None:
+        return ""
+    if isinstance(constraint, str):
+        return constraint
+    # For CVXPY constraints, use their string representation
+    try:
+        return str(constraint)
+    except Exception:
+        return repr(constraint)
+
+
+def _serialize_value(value: Any) -> Any:
+    """Convert a value to a JSON-serializable form."""
+    if value is None:
+        return None
+    if isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, Enum):
+        return value.value
+    if isinstance(value, (list, tuple)):
+        return [_serialize_value(v) for v in value]
+    if isinstance(value, dict):
+        return {str(k): _serialize_value(v) for k, v in value.items()}
+    # Handle numpy arrays
+    if hasattr(value, "tolist"):
+        return value.tolist()
+    # For CVXPY objects or other non-serializable types
+    return str(value)
+
+
+def _serialize_dataclass(obj: Any) -> dict[str, Any] | None:
+    """
+    Recursively convert a dataclass to a JSON-serializable dictionary.
+
+    Handles nested dataclasses, enums, numpy arrays, and CVXPY objects.
+    """
+    if obj is None:
+        return None
+
+    if not is_dataclass(obj) or isinstance(obj, type):
+        return _serialize_value(obj)
+
+    result = {}
+    for field_name, field_value in asdict(obj).items():
+        # Skip constraint objects in nested dataclasses (not serializable)
+        if field_name == "constraint" and hasattr(field_value, "expr"):
+            result[field_name] = str(field_value)
+            continue
+
+        if is_dataclass(field_value) and not isinstance(field_value, type):
+            result[field_name] = _serialize_dataclass(field_value)
+        elif isinstance(field_value, list):
+            result[field_name] = [
+                _serialize_dataclass(item) if is_dataclass(item) else _serialize_value(item)
+                for item in field_value
+            ]
+        elif isinstance(field_value, dict):
+            result[field_name] = {
+                str(k): _serialize_dataclass(v) if is_dataclass(v) else _serialize_value(v)
+                for k, v in field_value.items()
+            }
+        elif isinstance(field_value, Enum):
+            result[field_name] = field_value.value
+        else:
+            result[field_name] = _serialize_value(field_value)
+
+    return result

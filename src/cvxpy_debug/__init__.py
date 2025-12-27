@@ -1,5 +1,6 @@
 """CVXPY Debug - Diagnostic tools for CVXPY optimization problems."""
 
+from cvxpy_debug.comparison import SolverComparison, compare_solvers
 from cvxpy_debug.debug import debug
 from cvxpy_debug.infeasibility import debug_infeasibility
 from cvxpy_debug.numerical import debug_numerical_issues
@@ -15,4 +16,6 @@ __all__ = [
     "debug_numerical_issues",
     "debug_performance",
     "DebugReport",
+    "compare_solvers",
+    "SolverComparison",
 ]

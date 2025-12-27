@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CVXPY Debug Report - {{ report.status | title }}</title>
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-code: #f1f3f5;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --border-color: #dee2e6;
+            --accent-red: #dc3545;
+            --accent-yellow: #ffc107;
+            --accent-green: #28a745;
+            --accent-blue: #007bff;
+            --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: #1a1a2e;
+                --bg-secondary: #16213e;
+                --bg-code: #0f3460;
+                --text-primary: #e8e8e8;
+                --text-secondary: #a0a0a0;
+                --border-color: #3a3a5c;
+                --accent-red: #ff6b6b;
+                --accent-yellow: #ffd93d;
+                --accent-green: #6bcb77;
+                --accent-blue: #4d96ff;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-infeasible { background-color: var(--accent-red); color: white; }
+        .status-unbounded { background-color: var(--accent-yellow); color: #212529; }
+        .status-optimal { background-color: var(--accent-green); color: white; }
+        .status-inaccurate { background-color: var(--accent-blue); color: white; }
+
+        .section {
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            background-color: var(--bg-secondary);
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        .section-header:hover {
+            background-color: var(--bg-code);
+        }
+
+        .section-header::after {
+            content: "▼";
+            font-size: 0.75rem;
+            transition: transform 0.2s ease;
+        }
+
+        .section.collapsed .section-header::after {
+            transform: rotate(-90deg);
+        }
+
+        .section-content {
+            padding: 1rem;
+            display: block;
+        }
+
+        .section.collapsed .section-content {
+            display: none;
+        }
+
+        .finding {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .finding:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion {
+            padding: 0.5rem 0.75rem;
+            margin: 0.25rem 0;
+            background-color: var(--bg-secondary);
+            border-left: 3px solid var(--accent-green);
+            border-radius: 0 4px 4px 0;
+        }
+
+        .constraint-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .constraint-table th,
+        .constraint-table td {
+            padding: 0.5rem 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .constraint-table th {
+            background-color: var(--bg-secondary);
+            font-weight: 600;
+        }
+
+        .constraint-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .constraint-table tr:hover {
+            background-color: var(--bg-secondary);
+        }
+
+        .code {
+            font-family: var(--font-mono);
+            background-color: var(--bg-code);
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
+            font-size: 0.875em;
+        }
+
+        .code-block {
+            font-family: var(--font-mono);
+            background-color: var(--bg-code);
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 0.875rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .severity-high { color: var(--accent-red); font-weight: 600; }
+        .severity-medium { color: var(--accent-yellow); font-weight: 600; }
+        .severity-low { color: var(--accent-blue); }
+
+        .unbounded-var {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .unbounded-var:last-child {
+            border-bottom: none;
+        }
+
+        .direction-up { color: var(--accent-red); }
+        .direction-down { color: var(--accent-blue); }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .metric {
+            background-color: var(--bg-secondary);
+            padding: 0.75rem;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--accent-blue);
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .footer {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .copy-btn {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .copy-btn:hover {
+            background: var(--border-color);
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>CVXPY Debug Report</h1>
+        <span class="status-badge status-{{ report.status | replace('_', '-') }}">
+            {{ report.status | replace('_', ' ') }}
+        </span>
+    </div>
+
+    {% if report.findings %}
+    <div class="section">
+        <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+            Findings
+        </div>
+        <div class="section-content">
+            {% for finding in report.findings %}
+            <div class="finding">{{ finding }}</div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if report.constraint_info %}
+    <div class="section">
+        <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+            Conflicting Constraints ({{ report.constraint_info | length }})
+        </div>
+        <div class="section-content">
+            <table class="constraint-table">
+                <thead>
+                    <tr>
+                        <th>Constraint</th>
+                        <th>Slack Needed</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in report.constraint_info %}
+                    <tr>
+                        <td><code class="code">{{ c.expression }}</code></td>
+                        <td>{{ "%.6f" | format(c.slack) if c.slack else "—" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if report.unbounded_variables %}
+    <div class="section">
+        <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+            Unbounded Variables ({{ report.unbounded_variables | length }})
+        </div>
+        <div class="section-content">
+            {% for var in report.unbounded_variables %}
+            <div class="unbounded-var">
+                <span class="code">{{ var.name }}</span>
+                <span class="{% if var.direction == 'above' %}direction-up{% elif var.direction == 'below' %}direction-down{% endif %}">
+                    {{ var.direction_symbol }}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if report.numerical_analysis %}
+    <div class="section">
+        <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+            Numerical Analysis
+        </div>
+        <div class="section-content">
+            {% if report.numerical_analysis.scaling %}
+            <h4>Scaling Analysis</h4>
+            <div class="metrics-grid">
+                <div class="metric">
+                    <div class="metric-value">{{ "%.2e" | format(report.numerical_analysis.scaling.overall_range_ratio) }}</div>
+                    <div class="metric-label">Range Ratio</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value {% if report.numerical_analysis.scaling.badly_scaled %}severity-high{% else %}severity-low{% endif %}">
+                        {{ "Yes" if report.numerical_analysis.scaling.badly_scaled else "No" }}
+                    </div>
+                    <div class="metric-label">Badly Scaled</div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if report.numerical_analysis.violations and report.numerical_analysis.violations.total_violations > 0 %}
+            <h4 style="margin-top: 1rem;">Constraint Violations</h4>
+            <div class="metrics-grid">
+                <div class="metric">
+                    <div class="metric-value">{{ report.numerical_analysis.violations.total_violations }}</div>
+                    <div class="metric-label">Violations</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">{{ "%.2e" | format(report.numerical_analysis.violations.max_violation) }}</div>
+                    <div class="metric-label">Max Violation</div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if report.numerical_analysis.conditioning and report.numerical_analysis.conditioning.condition_number %}
+            <h4 style="margin-top: 1rem;">Conditioning</h4>
+            <div class="metrics-grid">
+                <div class="metric">
+                    <div class="metric-value">{{ "%.2e" | format(report.numerical_analysis.conditioning.condition_number) }}</div>
+                    <div class="metric-label">Condition Number</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value {% if report.numerical_analysis.conditioning.ill_conditioned %}severity-high{% else %}severity-low{% endif %}">
+                        {{ "Yes" if report.numerical_analysis.conditioning.ill_conditioned else "No" }}
+                    </div>
+                    <div class="metric-label">Ill-conditioned</div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if report.numerical_analysis.summary %}
+            <div class="code-block" style="margin-top: 1rem;">{{ report.numerical_analysis.summary }}</div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if report.performance_analysis and report.performance_analysis.anti_patterns %}
+    <div class="section">
+        <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+            Performance Analysis
+        </div>
+        <div class="section-content">
+            {% if report.performance_analysis.metrics %}
+            <div class="metrics-grid" style="margin-bottom: 1rem;">
+                <div class="metric">
+                    <div class="metric-value">{{ report.performance_analysis.metrics.num_variables }}</div>
+                    <div class="metric-label">Variables</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">{{ report.performance_analysis.metrics.num_constraints }}</div>
+                    <div class="metric-label">Constraints</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">{{ "%.1f" | format(report.performance_analysis.metrics.constraint_variable_ratio) }}</div>
+                    <div class="metric-label">Constraint/Var Ratio</div>
+                </div>
+            </div>
+            {% endif %}
+
+            <h4>Anti-Patterns Detected</h4>
+            {% for pattern in report.performance_analysis.anti_patterns %}
+            <div class="finding">
+                <span class="severity-{{ pattern.severity }}">[{{ pattern.severity | upper }}]</span>
+                {{ pattern.description }}
+                {% if pattern.suggestion %}
+                <div class="suggestion" style="margin-top: 0.5rem;">{{ pattern.suggestion }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if report.suggestions %}
+    <div class="section">
+        <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+            Suggested Fixes ({{ report.suggestions | length }})
+        </div>
+        <div class="section-content">
+            {% for suggestion in report.suggestions %}
+            <div class="suggestion">{{ suggestion }}</div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if report.iis %}
+    <div class="section collapsed">
+        <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+            IIS Constraints (Raw)
+        </div>
+        <div class="section-content">
+            <div class="code-block">{% for c in report.iis %}{{ c }}
+{% endfor %}</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        Generated by <strong>cvxpy-debug</strong> |
+        <a href="https://github.com/SteveDiamond/cvxpy-debug" style="color: var(--accent-blue);">GitHub</a>
+    </div>
+</body>
+</html>
