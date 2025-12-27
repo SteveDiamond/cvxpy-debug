@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import pickle
 import sys
+import warnings
 from pathlib import Path
 
 
@@ -28,17 +29,22 @@ def main(args: list[str] | None = None) -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  cvxpy-debug problem.pkl                    Debug a pickled problem (text output)
-  cvxpy-debug problem.pkl --format=json      Output as JSON
-  cvxpy-debug problem.pkl --format=html -o report.html
+  cvxpy-debug problem.cpf                    Debug a CPF problem file
+  cvxpy-debug problem.cpf --format=json      Output as JSON
+  cvxpy-debug problem.cpf --format=html -o report.html
+  cvxpy-debug problem.cpf --save=debugged.cpf  Save problem with debug report
   cvxpy-debug --version                      Show version
+
+File formats:
+  .cpf  CVXPY Problem Format (recommended, human-readable JSON)
+  .pkl  Pickle format (deprecated, will be removed in future)
         """,
     )
 
     parser.add_argument(
         "problem_file",
         nargs="?",
-        help="Path to a pickled CVXPY Problem (.pkl file)",
+        help="Path to a CVXPY Problem file (.cpf or .pkl)",
     )
 
     parser.add_argument(
@@ -80,6 +86,12 @@ Examples:
         help="Show version and exit",
     )
 
+    parser.add_argument(
+        "--save",
+        metavar="FILE",
+        help="Save problem and debug report to a .cpf file",
+    )
+
     parsed = parser.parse_args(args)
 
     # Handle version flag
@@ -100,19 +112,45 @@ Examples:
         print(f"Error: File not found: {problem_path}", file=sys.stderr)
         return 1
 
-    try:
-        with open(problem_path, "rb") as f:
-            problem = pickle.load(f)
-    except Exception as e:
-        print(f"Error loading pickle file: {e}", file=sys.stderr)
-        return 1
-
-    # Validate it's a CVXPY Problem
     import cvxpy as cp
 
-    if not isinstance(problem, cp.Problem):
-        print("Error: File does not contain a CVXPY Problem object", file=sys.stderr)
-        print(f"Got: {type(problem).__name__}", file=sys.stderr)
+    # Determine file type and load accordingly
+    suffix = problem_path.suffix.lower()
+
+    if suffix == ".cpf":
+        # Load CPF format (recommended)
+        try:
+            from cvxpy_debug.format import load_cpf
+
+            problem = load_cpf(problem_path)
+        except Exception as e:
+            print(f"Error loading CPF file: {e}", file=sys.stderr)
+            return 1
+
+    elif suffix == ".pkl":
+        # Load pickle format (deprecated)
+        warnings.warn(
+            "Pickle format (.pkl) is deprecated and will be removed in a future version. "
+            "Use .cpf format instead: cvxpy_debug.save_cpf(problem, 'file.cpf')",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        try:
+            with open(problem_path, "rb") as f:
+                problem = pickle.load(f)
+        except Exception as e:
+            print(f"Error loading pickle file: {e}", file=sys.stderr)
+            return 1
+
+        # Validate it's a CVXPY Problem
+        if not isinstance(problem, cp.Problem):
+            print("Error: File does not contain a CVXPY Problem object", file=sys.stderr)
+            print(f"Got: {type(problem).__name__}", file=sys.stderr)
+            return 1
+
+    else:
+        print(f"Error: Unsupported file format: {suffix}", file=sys.stderr)
+        print("Supported formats: .cpf (recommended), .pkl (deprecated)", file=sys.stderr)
         return 1
 
     # Run the debug
@@ -148,6 +186,25 @@ Examples:
         else:
             report.to_html(file=parsed.output)
             print(f"Report saved to: {parsed.output}", file=sys.stderr)
+
+    # Save to CPF if requested
+    if parsed.save:
+        from cvxpy_debug.format import save_cpf
+
+        save_path = Path(parsed.save)
+        # Ensure .cpf extension
+        if save_path.suffix.lower() != ".cpf":
+            save_path = save_path.with_suffix(".cpf")
+
+        save_cpf(
+            problem,
+            save_path,
+            metadata={
+                "source": str(problem_path),
+                "debug_status": report.status,
+            },
+        )
+        print(f"Problem saved to: {save_path}", file=sys.stderr)
 
     return 0
 
