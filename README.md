@@ -112,6 +112,41 @@ cvxpy_debug.debug_numerical_issues(problem, report)
 cvxpy_debug.debug_performance(problem, report)
 ```
 
+### Saving and Loading Problems
+
+Save problems to CPF (CVXPY Problem Format) for sharing, debugging, or reproducibility:
+
+```python
+from cvxpy_debug import save_cpf, load_cpf
+
+# Save a problem
+save_cpf(problem, "my_problem.cpf")
+
+# Load it back
+loaded = load_cpf("my_problem.cpf")
+loaded.solve()
+```
+
+CPF is a JSON-based format that captures the complete problem structure including variables, parameters, constraints, and objective. Large matrices are automatically externalized to `.npy` files.
+
+## Command Line Interface
+
+Debug problems from the command line:
+
+```bash
+# Debug a saved problem
+cvxpy-debug problem.cpf
+
+# Output as JSON
+cvxpy-debug problem.cpf --format=json
+
+# Save HTML report
+cvxpy-debug problem.cpf --format=html -o report.html
+
+# Save the problem with debug metadata
+cvxpy-debug problem.cpf --save=debugged.cpf
+```
+
 ## License
 
 Apache 2.0
