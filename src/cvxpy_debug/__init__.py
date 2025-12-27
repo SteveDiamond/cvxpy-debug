@@ -2,7 +2,7 @@
 
 from cvxpy_debug.comparison import SolverComparison, compare_solvers
 from cvxpy_debug.debug import debug
-from cvxpy_debug.format import load_cpf, save_cpf
+from cvxpy_debug.format import load_cvx, save_cvx
 from cvxpy_debug.infeasibility import debug_infeasibility
 from cvxpy_debug.numerical import debug_numerical_issues
 from cvxpy_debug.performance import debug_performance
@@ -19,6 +19,6 @@ __all__ = [
     "DebugReport",
     "compare_solvers",
     "SolverComparison",
-    "save_cpf",
-    "load_cpf",
+    "save_cvx",
+    "load_cvx",
 ]

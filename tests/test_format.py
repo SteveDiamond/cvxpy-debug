@@ -1,4 +1,4 @@
-"""Tests for the CPF (CVXPY Problem Format) serialization module."""
+"""Tests for the CVX format (.cvx) serialization module."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import cvxpy as cp
 import numpy as np
 import scipy.sparse as sp
 
-from cvxpy_debug.format import from_cpf_dict, load_cpf, save_cpf, to_cpf_dict
+from cvxpy_debug.format import from_cvx_dict, load_cvx, save_cvx, to_cvx_dict
 from cvxpy_debug.format.values import deserialize_value, serialize_value
 
 
@@ -102,8 +102,8 @@ class TestRoundTrip:
         x = cp.Variable(3, name="x", nonneg=True)
         prob = cp.Problem(cp.Minimize(cp.sum(x)), [x >= 1, x <= 10])
 
-        cpf = to_cpf_dict(prob)
-        loaded = from_cpf_dict(cpf)
+        cvx = to_cvx_dict(prob)
+        loaded = from_cvx_dict(cvx)
 
         # Check structure
         assert len(loaded.variables()) == 1
@@ -124,8 +124,8 @@ class TestRoundTrip:
             [x >= -1, x <= 1],
         )
 
-        cpf = to_cpf_dict(prob)
-        loaded = from_cpf_dict(cpf)
+        cvx = to_cvx_dict(prob)
+        loaded = from_cvx_dict(cvx)
 
         prob.solve()
         loaded.solve()
@@ -140,8 +140,8 @@ class TestRoundTrip:
             [cp.norm(x) <= t, x >= -1, cp.sum(x) >= 0],
         )
 
-        cpf = to_cpf_dict(prob)
-        loaded = from_cpf_dict(cpf)
+        cvx = to_cvx_dict(prob)
+        loaded = from_cvx_dict(cvx)
 
         prob.solve()
         loaded.solve()
@@ -155,8 +155,8 @@ class TestRoundTrip:
             [X[0, 0] >= 1, X[1, 1] >= 1],
         )
 
-        cpf = to_cpf_dict(prob)
-        loaded = from_cpf_dict(cpf)
+        cvx = to_cvx_dict(prob)
+        loaded = from_cvx_dict(cvx)
 
         prob.solve()
         loaded.solve()
@@ -169,8 +169,8 @@ class TestRoundTrip:
 
         prob = cp.Problem(cp.Minimize(p @ x), [x >= 0, cp.sum(x) == 1])
 
-        cpf = to_cpf_dict(prob)
-        loaded = from_cpf_dict(cpf)
+        cvx = to_cvx_dict(prob)
+        loaded = from_cvx_dict(cvx)
 
         prob.solve()
         loaded.solve()
@@ -181,8 +181,8 @@ class TestRoundTrip:
         x = cp.Variable(name="x")
         prob = cp.Problem(cp.Maximize(x), [x >= 0, x <= 10])
 
-        cpf = to_cpf_dict(prob)
-        loaded = from_cpf_dict(cpf)
+        cvx = to_cvx_dict(prob)
+        loaded = from_cvx_dict(cvx)
 
         prob.solve()
         loaded.solve()
@@ -194,8 +194,8 @@ class TestRoundTrip:
 
         for p in [1, 2, np.inf]:
             prob = cp.Problem(cp.Minimize(cp.norm(x, p)), [x >= 1])
-            cpf = to_cpf_dict(prob)
-            loaded = from_cpf_dict(cpf)
+            cvx = to_cvx_dict(prob)
+            loaded = from_cvx_dict(cvx)
 
             prob.solve()
             loaded.solve()
@@ -209,8 +209,8 @@ class TestRoundTrip:
             [cp.sum(x) == 5, x >= 0],
         )
 
-        cpf = to_cpf_dict(prob)
-        loaded = from_cpf_dict(cpf)
+        cvx = to_cvx_dict(prob)
+        loaded = from_cvx_dict(cvx)
 
         prob.solve()
         loaded.solve()
@@ -226,14 +226,14 @@ class TestFileIO:
         prob = cp.Problem(cp.Minimize(cp.sum(x)), [x >= 0])
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            path = Path(tmpdir) / "test.cpf"
-            save_cpf(prob, path)
+            path = Path(tmpdir) / "test.cvx"
+            save_cvx(prob, path)
 
             # Check file exists
             assert path.exists()
 
             # Load and verify
-            loaded = load_cpf(path)
+            loaded = load_cvx(path)
             prob.solve()
             loaded.solve()
             assert np.isclose(prob.value, loaded.value)
@@ -244,9 +244,9 @@ class TestFileIO:
         prob = cp.Problem(cp.Minimize(x), [x >= 0])
 
         metadata = {"name": "test_problem", "version": "1.0"}
-        cpf = to_cpf_dict(prob, metadata=metadata)
+        cvx = to_cvx_dict(prob, metadata=metadata)
 
-        assert cpf["metadata"] == metadata
+        assert cvx["metadata"] == metadata
 
 
 class TestEdgeCases:
@@ -257,8 +257,8 @@ class TestEdgeCases:
         x = cp.Variable(name="x", nonneg=True)
         prob = cp.Problem(cp.Minimize(x), [])
 
-        cpf = to_cpf_dict(prob)
-        loaded = from_cpf_dict(cpf)
+        cvx = to_cvx_dict(prob)
+        loaded = from_cvx_dict(cvx)
 
         assert len(loaded.constraints) == 0
 
@@ -267,8 +267,8 @@ class TestEdgeCases:
         x = cp.Variable(name="x")
         prob = cp.Problem(cp.Minimize(x), [x >= 0, x <= 1])
 
-        cpf = to_cpf_dict(prob)
-        loaded = from_cpf_dict(cpf)
+        cvx = to_cvx_dict(prob)
+        loaded = from_cvx_dict(cvx)
 
         prob.solve()
         loaded.solve()
@@ -283,8 +283,8 @@ class TestEdgeCases:
 
         prob = cp.Problem(cp.Minimize(cp.sum_squares(x)), [A @ x <= b])
 
-        cpf = to_cpf_dict(prob)
-        loaded = from_cpf_dict(cpf)
+        cvx = to_cvx_dict(prob)
+        loaded = from_cvx_dict(cvx)
 
         prob.solve()
         loaded.solve()
@@ -302,13 +302,13 @@ class TestEdgeCases:
             [x1 <= 10, x2 >= -10, x3 <= 5, x3 >= 0, X[0, 0] >= 1],
         )
 
-        cpf = to_cpf_dict(prob)
+        cvx = to_cvx_dict(prob)
 
         # Check attributes in serialized form
-        assert cpf["variables"]["x1"]["attributes"].get("nonneg") is True
-        assert cpf["variables"]["x2"]["attributes"].get("nonpos") is True
-        assert cpf["variables"]["x3"]["attributes"].get("integer") is True
-        assert cpf["variables"]["X"]["attributes"].get("PSD") is True
+        assert cvx["variables"]["x1"]["attributes"].get("nonneg") is True
+        assert cvx["variables"]["x2"]["attributes"].get("nonpos") is True
+        assert cvx["variables"]["x3"]["attributes"].get("integer") is True
+        assert cvx["variables"]["X"]["attributes"].get("PSD") is True
 
 
 class TestExternalData:
@@ -324,11 +324,11 @@ class TestExternalData:
         prob = cp.Problem(cp.Minimize(cp.sum_squares(x)), [A @ x <= b])
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            path = Path(tmpdir) / "large_problem.cpf"
-            save_cpf(prob, path, externalize_threshold=1000)
+            path = Path(tmpdir) / "large_problem.cvx"
+            save_cvx(prob, path, externalize_threshold=1000)
 
             # Check that data directory was created
-            data_dir = Path(tmpdir) / "large_problem.cpf.data"
+            data_dir = Path(tmpdir) / "large_problem.cvx.data"
             assert data_dir.exists(), "Data directory should be created"
 
             # Check that .npy files exist
@@ -336,7 +336,7 @@ class TestExternalData:
             assert len(npy_files) > 0, "Should have externalized arrays"
 
             # Load and verify
-            loaded = load_cpf(path)
+            loaded = load_cvx(path)
             prob.solve()
             loaded.solve()
             np.testing.assert_allclose(prob.value, loaded.value, rtol=1e-4)
@@ -350,18 +350,18 @@ class TestExternalData:
         prob = cp.Problem(cp.Minimize(cp.sum(x)), [A @ x <= b, x >= 0])
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            path = Path(tmpdir) / "small_problem.cpf"
-            save_cpf(prob, path, externalize_threshold=1000)
+            path = Path(tmpdir) / "small_problem.cvx"
+            save_cvx(prob, path, externalize_threshold=1000)
 
             # Check that no data directory was created (small matrices inlined)
-            data_dir = Path(tmpdir) / "small_problem.cpf.data"
+            data_dir = Path(tmpdir) / "small_problem.cvx.data"
             # Data dir might exist but should be empty or not exist
             if data_dir.exists():
                 npy_files = list(data_dir.glob("*.npy"))
                 assert len(npy_files) == 0, "Small matrices should be inlined"
 
             # Load and verify
-            loaded = load_cpf(path)
+            loaded = load_cvx(path)
             prob.solve()
             loaded.solve()
             np.testing.assert_allclose(prob.value, loaded.value, rtol=1e-5)
@@ -378,11 +378,11 @@ class TestExternalData:
         prob = cp.Problem(cp.Minimize(cp.sum(x)), [A @ x <= b, x >= 0])
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            path = Path(tmpdir) / "sparse_problem.cpf"
-            save_cpf(prob, path, externalize_threshold=100)
+            path = Path(tmpdir) / "sparse_problem.cvx"
+            save_cvx(prob, path, externalize_threshold=100)
 
             # Load and verify
-            loaded = load_cpf(path)
+            loaded = load_cvx(path)
             prob.solve()
             loaded.solve()
             np.testing.assert_allclose(prob.value, loaded.value, rtol=1e-4)
@@ -393,8 +393,8 @@ class TestWithFixtures:
 
     def test_simple_infeasible(self, simple_infeasible):
         """Round-trip simple infeasible problem."""
-        cpf = to_cpf_dict(simple_infeasible)
-        loaded = from_cpf_dict(cpf)
+        cvx = to_cvx_dict(simple_infeasible)
+        loaded = from_cvx_dict(cvx)
 
         # Both should be infeasible
         simple_infeasible.solve()
@@ -403,8 +403,8 @@ class TestWithFixtures:
 
     def test_budget_infeasible(self, budget_infeasible):
         """Round-trip budget allocation problem."""
-        cpf = to_cpf_dict(budget_infeasible)
-        loaded = from_cpf_dict(cpf)
+        cvx = to_cvx_dict(budget_infeasible)
+        loaded = from_cvx_dict(cvx)
 
         budget_infeasible.solve()
         loaded.solve()
@@ -412,8 +412,8 @@ class TestWithFixtures:
 
     def test_soc_infeasible(self, soc_infeasible):
         """Round-trip SOC problem."""
-        cpf = to_cpf_dict(soc_infeasible)
-        loaded = from_cpf_dict(cpf)
+        cvx = to_cvx_dict(soc_infeasible)
+        loaded = from_cvx_dict(cvx)
 
         soc_infeasible.solve()
         loaded.solve()
@@ -421,8 +421,8 @@ class TestWithFixtures:
 
     def test_feasible_problem(self, feasible_problem):
         """Round-trip feasible problem."""
-        cpf = to_cpf_dict(feasible_problem)
-        loaded = from_cpf_dict(cpf)
+        cvx = to_cvx_dict(feasible_problem)
+        loaded = from_cvx_dict(cvx)
 
         feasible_problem.solve()
         loaded.solve()
@@ -430,8 +430,8 @@ class TestWithFixtures:
 
     def test_well_scaled_problem(self, well_scaled_problem):
         """Round-trip well-scaled problem."""
-        cpf = to_cpf_dict(well_scaled_problem)
-        loaded = from_cpf_dict(cpf)
+        cvx = to_cvx_dict(well_scaled_problem)
+        loaded = from_cvx_dict(cvx)
 
         well_scaled_problem.solve()
         loaded.solve()

@@ -1,4 +1,4 @@
-"""Serialize CVXPY problems to CPF (CVXPY Problem Format) JSON.
+"""Serialize CVXPY problems to CVX format (.cvx) JSON.
 
 Uses CVXPY's get_data() pattern for uniform atom serialization.
 """
@@ -14,11 +14,11 @@ import numpy as np
 
 from .values import DataManager, serialize_value
 
-CPF_VERSION = "1.0.0"
+CVX_FORMAT_VERSION = "1.0.0"
 
 
-class CPFWriter:
-    """Serialize a CVXPY Problem to CPF format."""
+class CVXWriter:
+    """Serialize a CVXPY Problem to CVX format."""
 
     def __init__(
         self,
@@ -45,34 +45,34 @@ class CPFWriter:
         path: str | Path,
         metadata: dict[str, Any] | None = None,
     ) -> None:
-        """Write problem to CPF file.
+        """Write problem to CVX file.
 
         Args:
             problem: CVXPY problem to serialize
-            path: Output file path (.cpf extension recommended)
+            path: Output file path (.cvx extension recommended)
             metadata: Optional metadata to include
         """
         path = Path(path)
         self._data_manager = DataManager(path, self.externalize_threshold)
 
-        cpf_data = self._serialize_problem(problem, metadata)
+        cvx_data = self._serialize_problem(problem, metadata)
 
         with open(path, "w") as f:
-            json.dump(cpf_data, f, indent=2)
+            json.dump(cvx_data, f, indent=2)
 
     def to_dict(
         self,
         problem: cp.Problem,
         metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Convert problem to CPF dictionary (no external files).
+        """Convert problem to CVX dictionary (no external files).
 
         Args:
             problem: CVXPY problem to serialize
             metadata: Optional metadata to include
 
         Returns:
-            CPF-format dictionary
+            CVX-format dictionary
         """
         self._data_manager = None
         return self._serialize_problem(problem, metadata)
@@ -82,7 +82,7 @@ class CPFWriter:
         problem: cp.Problem,
         metadata: dict[str, Any] | None,
     ) -> dict[str, Any]:
-        """Serialize a problem to CPF dictionary."""
+        """Serialize a problem to CVX dictionary."""
         # Reset registries
         self._var_registry = {}
         self._param_registry = {}
@@ -96,8 +96,8 @@ class CPFWriter:
             self._register_parameter(param)
 
         # Serialize components
-        cpf = {
-            "cpf_version": CPF_VERSION,
+        cvx = {
+            "cvx_version": CVX_FORMAT_VERSION,
             "variables": self._serialize_variables(problem.variables()),
             "parameters": self._serialize_parameters(problem.parameters()),
             "constants": {},  # Will be populated during expression serialization
@@ -107,9 +107,9 @@ class CPFWriter:
         }
 
         # Add constants that were referenced
-        cpf["constants"] = self._serialize_constants()
+        cvx["constants"] = self._serialize_constants()
 
-        return cpf
+        return cvx
 
     def _register_variable(self, var: cp.Variable) -> str:
         """Register a variable and return its ID."""
@@ -280,7 +280,7 @@ class CPFWriter:
         return result
 
 
-def save_cpf(
+def save_cvx(
     problem: cp.Problem,
     path: str | Path,
     *,
@@ -288,36 +288,36 @@ def save_cpf(
     include_values: bool = True,
     metadata: dict[str, Any] | None = None,
 ) -> None:
-    """Save a CVXPY problem to CPF format.
+    """Save a CVXPY problem to CVX format.
 
     Args:
         problem: The CVXPY problem to save
-        path: Output file path (.cpf extension recommended)
+        path: Output file path (.cvx extension recommended)
         externalize_threshold: Array size threshold for external files
         include_values: Whether to include current variable/parameter values
         metadata: Optional metadata dictionary to include
 
     Example:
         >>> import cvxpy as cp
-        >>> from cvxpy_debug.format import save_cpf
+        >>> from cvxpy_debug.format import save_cvx
         >>> x = cp.Variable(3, name="x")
         >>> problem = cp.Problem(cp.Minimize(cp.sum(x)), [x >= 0])
-        >>> save_cpf(problem, "my_problem.cpf")
+        >>> save_cvx(problem, "my_problem.cvx")
     """
-    writer = CPFWriter(
+    writer = CVXWriter(
         externalize_threshold=externalize_threshold,
         include_values=include_values,
     )
     writer.write(problem, path, metadata=metadata)
 
 
-def to_cpf_dict(
+def to_cvx_dict(
     problem: cp.Problem,
     *,
     include_values: bool = True,
     metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Convert a CVXPY problem to CPF dictionary (no external files).
+    """Convert a CVXPY problem to CVX dictionary (no external files).
 
     Args:
         problem: The CVXPY problem to convert
@@ -325,7 +325,7 @@ def to_cpf_dict(
         metadata: Optional metadata dictionary to include
 
     Returns:
-        CPF-format dictionary
+        CVX-format dictionary
     """
-    writer = CPFWriter(include_values=include_values)
+    writer = CVXWriter(include_values=include_values)
     return writer.to_dict(problem, metadata=metadata)

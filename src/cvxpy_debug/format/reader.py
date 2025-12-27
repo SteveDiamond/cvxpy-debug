@@ -1,4 +1,4 @@
-"""Deserialize CPF (CVXPY Problem Format) JSON to CVXPY problems.
+"""Deserialize CVX format (.cvx) JSON to CVXPY problems.
 
 Uses CVXPY's reconstruction pattern: type(self)(*(args + data))
 """
@@ -14,11 +14,11 @@ import cvxpy as cp
 
 from .values import DataManager, deserialize_value
 
-CPF_VERSION = "1.0.0"
+CVX_FORMAT_VERSION = "1.0.0"
 
 
-class CPFReader:
-    """Deserialize a CPF file to a CVXPY Problem."""
+class CVXReader:
+    """Deserialize a CVX file to a CVXPY Problem."""
 
     def __init__(self):
         """Initialize the reader."""
@@ -28,10 +28,10 @@ class CPFReader:
         self._data_manager: DataManager | None = None
 
     def read(self, path: str | Path) -> cp.Problem:
-        """Read a CPF file and return a CVXPY Problem.
+        """Read a CVX file and return a CVXPY Problem.
 
         Args:
-            path: Path to the CPF file
+            path: Path to the CVX file
 
         Returns:
             Reconstructed CVXPY Problem
@@ -40,31 +40,31 @@ class CPFReader:
         self._data_manager = DataManager(path, threshold=0)  # threshold unused for reading
 
         with open(path) as f:
-            cpf_data = json.load(f)
+            cvx_data = json.load(f)
 
-        return self._deserialize_problem(cpf_data)
+        return self._deserialize_problem(cvx_data)
 
-    def from_dict(self, cpf_data: dict[str, Any]) -> cp.Problem:
-        """Reconstruct a Problem from a CPF dictionary.
+    def from_dict(self, cvx_data: dict[str, Any]) -> cp.Problem:
+        """Reconstruct a Problem from a CVX dictionary.
 
         Args:
-            cpf_data: CPF-format dictionary
+            cvx_data: CVX-format dictionary
 
         Returns:
             Reconstructed CVXPY Problem
         """
         self._data_manager = None
-        return self._deserialize_problem(cpf_data)
+        return self._deserialize_problem(cvx_data)
 
-    def _deserialize_problem(self, cpf_data: dict[str, Any]) -> cp.Problem:
-        """Deserialize the problem from CPF data."""
+    def _deserialize_problem(self, cvx_data: dict[str, Any]) -> cp.Problem:
+        """Deserialize the problem from CVX data."""
         # Check version compatibility
-        version = cpf_data.get("cpf_version", "0.0.0")
+        version = cvx_data.get("cvx_version", "0.0.0")
         major = int(version.split(".")[0])
-        current_major = int(CPF_VERSION.split(".")[0])
+        current_major = int(CVX_FORMAT_VERSION.split(".")[0])
         if major != current_major:
             raise ValueError(
-                f"CPF version {version} is not compatible with reader version {CPF_VERSION}"
+                f"CVX version {version} is not compatible with reader version {CVX_FORMAT_VERSION}"
             )
 
         # Reset maps
@@ -73,15 +73,15 @@ class CPFReader:
         self._const_map = {}
 
         # First, reconstruct all variables, parameters, and constants
-        self._reconstruct_variables(cpf_data.get("variables", {}))
-        self._reconstruct_parameters(cpf_data.get("parameters", {}))
-        self._reconstruct_constants(cpf_data.get("constants", {}))
+        self._reconstruct_variables(cvx_data.get("variables", {}))
+        self._reconstruct_parameters(cvx_data.get("parameters", {}))
+        self._reconstruct_constants(cvx_data.get("constants", {}))
 
         # Reconstruct objective
-        objective = self._deserialize_objective(cpf_data["objective"])
+        objective = self._deserialize_objective(cvx_data["objective"])
 
         # Reconstruct constraints
-        constraints = [self._deserialize_constraint(c) for c in cpf_data.get("constraints", [])]
+        constraints = [self._deserialize_constraint(c) for c in cvx_data.get("constraints", [])]
 
         return cp.Problem(objective, constraints)
 
@@ -311,32 +311,32 @@ class CPFReader:
             raise ValueError(f"Cannot find class {class_name} in module {module}") from e
 
 
-def load_cpf(path: str | Path) -> cp.Problem:
-    """Load a CVXPY problem from a CPF file.
+def load_cvx(path: str | Path) -> cp.Problem:
+    """Load a CVXPY problem from a CVX file.
 
     Args:
-        path: Path to the CPF file
+        path: Path to the CVX file
 
     Returns:
         Reconstructed CVXPY Problem
 
     Example:
-        >>> from cvxpy_debug.format import load_cpf
-        >>> problem = load_cpf("my_problem.cpf")
+        >>> from cvxpy_debug.format import load_cvx
+        >>> problem = load_cvx("my_problem.cvx")
         >>> problem.solve()
     """
-    reader = CPFReader()
+    reader = CVXReader()
     return reader.read(path)
 
 
-def from_cpf_dict(cpf_data: dict[str, Any]) -> cp.Problem:
-    """Reconstruct a CVXPY problem from a CPF dictionary.
+def from_cvx_dict(cvx_data: dict[str, Any]) -> cp.Problem:
+    """Reconstruct a CVXPY problem from a CVX dictionary.
 
     Args:
-        cpf_data: CPF-format dictionary
+        cvx_data: CVX-format dictionary
 
     Returns:
         Reconstructed CVXPY Problem
     """
-    reader = CPFReader()
-    return reader.from_dict(cpf_data)
+    reader = CVXReader()
+    return reader.from_dict(cvx_data)

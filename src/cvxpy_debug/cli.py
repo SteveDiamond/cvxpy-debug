@@ -29,14 +29,14 @@ def main(args: list[str] | None = None) -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  cvxpy-debug problem.cpf                    Debug a CPF problem file
-  cvxpy-debug problem.cpf --format=json      Output as JSON
-  cvxpy-debug problem.cpf --format=html -o report.html
-  cvxpy-debug problem.cpf --save=debugged.cpf  Save problem with debug report
+  cvxpy-debug problem.cvx                    Debug a CVX problem file
+  cvxpy-debug problem.cvx --format=json      Output as JSON
+  cvxpy-debug problem.cvx --format=html -o report.html
+  cvxpy-debug problem.cvx --save=debugged.cvx  Save problem with debug report
   cvxpy-debug --version                      Show version
 
 File formats:
-  .cpf  CVXPY Problem Format (recommended, human-readable JSON)
+  .cvx  CVX format (recommended, human-readable JSON)
   .pkl  Pickle format (deprecated, will be removed in future)
         """,
     )
@@ -44,7 +44,7 @@ File formats:
     parser.add_argument(
         "problem_file",
         nargs="?",
-        help="Path to a CVXPY Problem file (.cpf or .pkl)",
+        help="Path to a CVXPY Problem file (.cvx or .pkl)",
     )
 
     parser.add_argument(
@@ -89,7 +89,7 @@ File formats:
     parser.add_argument(
         "--save",
         metavar="FILE",
-        help="Save problem and debug report to a .cpf file",
+        help="Save problem and debug report to a .cvx file",
     )
 
     parsed = parser.parse_args(args)
@@ -117,21 +117,21 @@ File formats:
     # Determine file type and load accordingly
     suffix = problem_path.suffix.lower()
 
-    if suffix == ".cpf":
-        # Load CPF format (recommended)
+    if suffix == ".cvx":
+        # Load CVX format (recommended)
         try:
-            from cvxpy_debug.format import load_cpf
+            from cvxpy_debug.format import load_cvx
 
-            problem = load_cpf(problem_path)
+            problem = load_cvx(problem_path)
         except Exception as e:
-            print(f"Error loading CPF file: {e}", file=sys.stderr)
+            print(f"Error loading CVX file: {e}", file=sys.stderr)
             return 1
 
     elif suffix == ".pkl":
         # Load pickle format (deprecated)
         warnings.warn(
             "Pickle format (.pkl) is deprecated and will be removed in a future version. "
-            "Use .cpf format instead: cvxpy_debug.save_cpf(problem, 'file.cpf')",
+            "Use .cvx format instead: cvxpy_debug.save_cvx(problem, 'file.cvx')",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -150,7 +150,7 @@ File formats:
 
     else:
         print(f"Error: Unsupported file format: {suffix}", file=sys.stderr)
-        print("Supported formats: .cpf (recommended), .pkl (deprecated)", file=sys.stderr)
+        print("Supported formats: .cvx (recommended), .pkl (deprecated)", file=sys.stderr)
         return 1
 
     # Run the debug
@@ -187,16 +187,16 @@ File formats:
             report.to_html(file=parsed.output)
             print(f"Report saved to: {parsed.output}", file=sys.stderr)
 
-    # Save to CPF if requested
+    # Save to CVX if requested
     if parsed.save:
-        from cvxpy_debug.format import save_cpf
+        from cvxpy_debug.format import save_cvx
 
         save_path = Path(parsed.save)
-        # Ensure .cpf extension
-        if save_path.suffix.lower() != ".cpf":
-            save_path = save_path.with_suffix(".cpf")
+        # Ensure .cvx extension
+        if save_path.suffix.lower() != ".cvx":
+            save_path = save_path.with_suffix(".cvx")
 
-        save_cpf(
+        save_cvx(
             problem,
             save_path,
             metadata={

@@ -1,4 +1,4 @@
-"""Serialize and deserialize get_data() values for the CPF format.
+"""Serialize and deserialize get_data() values for the CVX format.
 
 This module handles the special value types that can appear in CVXPY's
 get_data() return values, including:
@@ -246,7 +246,7 @@ class DataManager:
         """Initialize the data manager.
 
         Args:
-            base_path: Base path for the CPF file (without extension)
+            base_path: Base path for the CVX file (without extension)
             threshold: Size threshold for externalizing arrays
         """
         self.base_path = Path(base_path)
