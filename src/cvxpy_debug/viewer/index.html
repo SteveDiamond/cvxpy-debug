@@ -1,0 +1,2151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CVX Problem Viewer</title>
+    <style>
+        /* ===== CSS Variables ===== */
+        :root {
+            --bg-main: #0d1117;
+            --bg-panel: #161b22;
+            --bg-card: #21262d;
+            --bg-code: #1c2128;
+            --bg-hover: #30363d;
+            --bg-active: #388bfd33;
+            --bg-drop: #0d1117;
+
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-purple: #a371f7;
+            --accent-red: #f85149;
+            --accent-cyan: #39c5cf;
+            --accent-yellow: #d29922;
+            --accent-pink: #db61a2;
+
+            --border-color: #30363d;
+            --border-subtle: #21262d;
+
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
+
+            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+
+            --transition: 0.2s ease;
+        }
+
+        /* ===== Reset ===== */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-main);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        /* ===== Drop Zone ===== */
+        .drop-zone {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--bg-main) 0%, #1a1f35 100%);
+            z-index: 100;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .drop-zone.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .drop-zone-content {
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .drop-zone-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 2rem;
+            position: relative;
+        }
+
+        .drop-zone-icon svg {
+            width: 100%;
+            height: 100%;
+            stroke: var(--accent-blue);
+            stroke-width: 1.5;
+            fill: none;
+            filter: drop-shadow(0 0 20px rgba(88, 166, 255, 0.3));
+        }
+
+        .drop-zone-icon::before {
+            content: '';
+            position: absolute;
+            inset: -20px;
+            background: radial-gradient(circle, rgba(88, 166, 255, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .drop-zone h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .drop-zone p {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .drop-target {
+            width: 400px;
+            max-width: 90vw;
+            padding: 3rem 2rem;
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-lg);
+            background: var(--bg-panel);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .drop-target:hover,
+        .drop-target.dragover {
+            border-color: var(--accent-blue);
+            background: var(--bg-active);
+            transform: scale(1.02);
+        }
+
+        .drop-target.dragover {
+            border-style: solid;
+        }
+
+        .browse-btn {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            background: var(--accent-blue);
+            color: var(--bg-main);
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .browse-btn:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .drop-zone-footer {
+            margin-top: 2rem;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .drop-zone-footer a {
+            color: var(--accent-blue);
+            text-decoration: none;
+        }
+
+        /* ===== Main Viewer ===== */
+        .viewer {
+            display: none;
+            height: 100%;
+            flex-direction: column;
+        }
+
+        .viewer.active {
+            display: flex;
+        }
+
+        /* ===== Header ===== */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .header-logo svg {
+            width: 24px;
+            height: 24px;
+            stroke: var(--accent-blue);
+        }
+
+        .file-name {
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            padding: 0.25rem 0.75rem;
+            background: var(--bg-code);
+            border-radius: var(--radius-sm);
+        }
+
+        .problem-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-lp { background: var(--accent-green); color: var(--bg-main); }
+        .badge-qp { background: var(--accent-blue); color: var(--bg-main); }
+        .badge-socp { background: var(--accent-purple); color: white; }
+        .badge-sdp { background: var(--accent-cyan); color: var(--bg-main); }
+        .badge-mip { background: var(--accent-orange); color: var(--bg-main); }
+        .badge-exp { background: var(--accent-pink); color: white; }
+
+        .header-spacer { flex: 1; }
+
+        .new-file-btn {
+            padding: 0.375rem 0.75rem;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-size: 0.8125rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .new-file-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            border-color: var(--text-secondary);
+        }
+
+        /* ===== Content Layout ===== */
+        .content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 320px;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .main-panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        /* ===== Dashboard Cards ===== */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .metric-card:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            line-height: 1.2;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.25rem;
+        }
+
+        .metric-card.minimize .metric-value { color: var(--accent-green); }
+        .metric-card.maximize .metric-value { color: var(--accent-orange); }
+
+        /* ===== Sidebar Sections ===== */
+        .sidebar-section {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-section:last-child {
+            border-bottom: none;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            background: var(--bg-card);
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s ease;
+        }
+
+        .section-header:hover {
+            background: var(--bg-hover);
+        }
+
+        .section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+        }
+
+        .section-count {
+            font-size: 0.6875rem;
+            padding: 0.125rem 0.5rem;
+            background: var(--bg-hover);
+            border-radius: 9999px;
+            color: var(--text-secondary);
+        }
+
+        .section-toggle {
+            font-size: 0.625rem;
+            color: var(--text-muted);
+            transition: transform 0.2s ease;
+        }
+
+        .sidebar-section.collapsed .section-toggle {
+            transform: rotate(-90deg);
+        }
+
+        .section-content {
+            max-height: 300px;
+            overflow-y: auto;
+            transition: max-height 0.3s ease;
+        }
+
+        .sidebar-section.collapsed .section-content {
+            max-height: 0;
+            overflow: hidden;
+        }
+
+        /* ===== Variable/Parameter Items ===== */
+        .var-item, .param-item {
+            padding: 0.625rem 1rem;
+            border-bottom: 1px solid var(--border-subtle);
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .var-item:hover, .param-item:hover {
+            background: var(--bg-hover);
+        }
+
+        .var-item:last-child, .param-item:last-child {
+            border-bottom: none;
+        }
+
+        .var-name {
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            color: var(--accent-blue);
+            margin-bottom: 0.25rem;
+        }
+
+        .param-item .var-name {
+            color: var(--accent-green);
+        }
+
+        .var-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.375rem;
+            font-size: 0.6875rem;
+        }
+
+        .var-shape {
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+
+        .attr-badge {
+            padding: 0.0625rem 0.375rem;
+            background: var(--bg-hover);
+            border-radius: 3px;
+            color: var(--text-secondary);
+            font-size: 0.625rem;
+        }
+
+        .attr-badge.nonneg { background: rgba(63, 185, 80, 0.2); color: var(--accent-green); }
+        .attr-badge.nonpos { background: rgba(248, 81, 73, 0.2); color: var(--accent-red); }
+        .attr-badge.psd { background: rgba(57, 197, 207, 0.2); color: var(--accent-cyan); }
+        .attr-badge.nsd { background: rgba(163, 113, 247, 0.2); color: var(--accent-purple); }
+        .attr-badge.integer { background: rgba(210, 153, 34, 0.2); color: var(--accent-orange); }
+        .attr-badge.boolean { background: rgba(219, 97, 162, 0.2); color: var(--accent-pink); }
+        .attr-badge.symmetric { background: rgba(88, 166, 255, 0.2); color: var(--accent-blue); }
+
+        /* ===== Panels ===== */
+        .panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .panel-header:hover {
+            background: var(--bg-hover);
+        }
+
+        .panel-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .panel-toggle {
+            font-size: 0.625rem;
+            color: var(--text-muted);
+            transition: transform 0.2s ease;
+        }
+
+        .panel.collapsed .panel-toggle {
+            transform: rotate(-90deg);
+        }
+
+        .panel-content {
+            padding: 1rem;
+        }
+
+        .panel.collapsed .panel-content {
+            display: none;
+        }
+
+        /* ===== Objective Panel ===== */
+        .objective-sense {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .sense-minimize {
+            background: rgba(63, 185, 80, 0.2);
+            color: var(--accent-green);
+        }
+
+        .sense-maximize {
+            background: rgba(210, 153, 34, 0.2);
+            color: var(--accent-orange);
+        }
+
+        /* ===== Expression Tree ===== */
+        .expr-tree {
+            font-family: var(--font-mono);
+            font-size: 0.8125rem;
+            line-height: 1.6;
+        }
+
+        .tree-node {
+            position: relative;
+            padding-left: 1.25rem;
+        }
+
+        .tree-node::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: var(--border-color);
+        }
+
+        .tree-node:last-child::before {
+            bottom: 50%;
+        }
+
+        .tree-node::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.75em;
+            width: 1rem;
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        .tree-root {
+            padding-left: 0;
+        }
+
+        .tree-root::before,
+        .tree-root::after {
+            display: none;
+        }
+
+        .tree-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.125rem 0;
+            cursor: default;
+        }
+
+        .tree-toggle {
+            width: 14px;
+            height: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-hover);
+            border-radius: 3px;
+            font-size: 0.625rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+        }
+
+        .tree-toggle:hover {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .tree-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .tree-atom {
+            color: var(--accent-purple);
+        }
+
+        .tree-var {
+            color: var(--accent-blue);
+        }
+
+        .tree-param {
+            color: var(--accent-green);
+        }
+
+        .tree-const {
+            color: var(--accent-orange);
+        }
+
+        .tree-op {
+            color: var(--text-secondary);
+        }
+
+        .tree-children {
+            margin-left: 0.5rem;
+        }
+
+        .tree-children.hidden {
+            display: none;
+        }
+
+        /* ===== Constraint List ===== */
+        .constraint-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .constraint-item {
+            background: var(--bg-code);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+        }
+
+        .constraint-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .constraint-header:hover {
+            background: var(--bg-hover);
+        }
+
+        .constraint-type {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .type-zero { background: rgba(88, 166, 255, 0.2); color: var(--accent-blue); }
+        .type-nonpos { background: rgba(248, 81, 73, 0.2); color: var(--accent-red); }
+        .type-nonneg { background: rgba(63, 185, 80, 0.2); color: var(--accent-green); }
+        .type-soc { background: rgba(163, 113, 247, 0.2); color: var(--accent-purple); }
+        .type-psd { background: rgba(57, 197, 207, 0.2); color: var(--accent-cyan); }
+        .type-exp { background: rgba(210, 153, 34, 0.2); color: var(--accent-yellow); }
+        .type-other { background: var(--bg-hover); color: var(--text-secondary); }
+
+        .constraint-preview {
+            flex: 1;
+            font-family: var(--font-mono);
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .constraint-toggle {
+            font-size: 0.625rem;
+            color: var(--text-muted);
+            transition: transform 0.2s ease;
+        }
+
+        .constraint-item.collapsed .constraint-toggle {
+            transform: rotate(-90deg);
+        }
+
+        .constraint-body {
+            padding: 0.75rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .constraint-item.collapsed .constraint-body {
+            display: none;
+        }
+
+        .constraint-pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.8125rem;
+        }
+
+        .page-btn {
+            padding: 0.375rem 0.75rem;
+            background: var(--bg-hover);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ===== Matrix Modal ===== */
+        .matrix-modal {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .matrix-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .matrix-container {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            max-width: 90vw;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .matrix-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .matrix-title {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .matrix-shape {
+            font-family: var(--font-mono);
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+        }
+
+        .matrix-close {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-hover);
+            border: none;
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1.25rem;
+            transition: all 0.15s ease;
+        }
+
+        .matrix-close:hover {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        .matrix-body {
+            flex: 1;
+            padding: 1rem;
+            overflow: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+        }
+
+        .matrix-canvas {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+        }
+
+        .matrix-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .matrix-stats {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .matrix-stat {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .matrix-stat-label {
+            color: var(--text-muted);
+        }
+
+        .matrix-stat-value {
+            font-family: var(--font-mono);
+            color: var(--text-primary);
+        }
+
+        .color-scale {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .color-bar {
+            width: 100px;
+            height: 12px;
+            border-radius: 2px;
+            background: linear-gradient(to right,
+                #2166ac, #67a9cf, #d1e5f0,
+                #f7f7f7,
+                #fddbc7, #ef8a62, #b2182b);
+        }
+
+        /* ===== Error State ===== */
+        .error-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--accent-red);
+        }
+
+        .error-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .error-message {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .error-details {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+        }
+
+        /* ===== Loading State ===== */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ===== Scrollbar ===== */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-main);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* ===== Tooltip ===== */
+        .tooltip {
+            position: fixed;
+            padding: 0.375rem 0.625rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-md);
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-primary);
+            pointer-events: none;
+            z-index: 300;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+
+        .tooltip.visible {
+            opacity: 1;
+        }
+
+        /* ===== Empty State ===== */
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <!-- Drop Zone -->
+    <div class="drop-zone" id="dropZone">
+        <div class="drop-zone-content">
+            <div class="drop-zone-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke-linecap="round" stroke-linejoin="round"/>
+                    <polyline points="14,2 14,8 20,8" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 18v-6M9 15l3-3 3 3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="drop-target" id="dropTarget">
+                <h1>CVX Problem Viewer</h1>
+                <p>Drop a .cvx file here or click to browse</p>
+                <button class="browse-btn" onclick="document.getElementById('fileInput').click()">
+                    Browse Files
+                </button>
+            </div>
+            <input type="file" class="file-input" id="fileInput" accept=".cvx,.json">
+            <div class="drop-zone-footer">
+                Powered by <a href="https://github.com/cvxpy/cvxpy" target="_blank">CVXPY</a> &middot;
+                <a href="https://github.com/SteveDiamond/cvxpy-debug" target="_blank">cvxpy-debug</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Viewer -->
+    <div class="viewer" id="viewer">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-logo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14,2 14,8 20,8"/>
+                </svg>
+                CVX Viewer
+            </div>
+            <span class="file-name" id="fileName">problem.cvx</span>
+            <span class="problem-badge badge-lp" id="problemBadge">LP</span>
+            <div class="header-spacer"></div>
+            <button class="new-file-btn" onclick="app.reset()">Load New File</button>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Variables Section -->
+                <div class="sidebar-section" id="varsSection">
+                    <div class="section-header" onclick="toggleSection('varsSection')">
+                        <span class="section-title">Variables</span>
+                        <span class="section-count" id="varsCount">0</span>
+                        <span class="section-toggle">&#9660;</span>
+                    </div>
+                    <div class="section-content" id="varsList"></div>
+                </div>
+
+                <!-- Parameters Section -->
+                <div class="sidebar-section" id="paramsSection">
+                    <div class="section-header" onclick="toggleSection('paramsSection')">
+                        <span class="section-title">Parameters</span>
+                        <span class="section-count" id="paramsCount">0</span>
+                        <span class="section-toggle">&#9660;</span>
+                    </div>
+                    <div class="section-content" id="paramsList"></div>
+                </div>
+
+                <!-- Constants Section -->
+                <div class="sidebar-section collapsed" id="constsSection">
+                    <div class="section-header" onclick="toggleSection('constsSection')">
+                        <span class="section-title">Constants</span>
+                        <span class="section-count" id="constsCount">0</span>
+                        <span class="section-toggle">&#9660;</span>
+                    </div>
+                    <div class="section-content" id="constsList"></div>
+                </div>
+            </div>
+
+            <!-- Main Panel -->
+            <div class="main-panel" id="mainPanel">
+                <!-- Dashboard -->
+                <div class="dashboard" id="dashboard"></div>
+
+                <!-- Objective Panel -->
+                <div class="panel" id="objectivePanel">
+                    <div class="panel-header" onclick="togglePanel('objectivePanel')">
+                        <span class="panel-title">
+                            <span class="objective-sense sense-minimize" id="objectiveSense">MINIMIZE</span>
+                            Objective
+                        </span>
+                        <span class="panel-toggle">&#9660;</span>
+                    </div>
+                    <div class="panel-content">
+                        <div class="expr-tree" id="objectiveTree"></div>
+                    </div>
+                </div>
+
+                <!-- Constraints Panel -->
+                <div class="panel" id="constraintsPanel">
+                    <div class="panel-header" onclick="togglePanel('constraintsPanel')">
+                        <span class="panel-title">
+                            Constraints
+                            <span class="section-count" id="constraintsCount">0</span>
+                        </span>
+                        <span class="panel-toggle">&#9660;</span>
+                    </div>
+                    <div class="panel-content">
+                        <div class="constraint-list" id="constraintsList"></div>
+                        <div class="constraint-pagination" id="constraintsPagination"></div>
+                    </div>
+                </div>
+
+                <!-- Metadata Panel -->
+                <div class="panel collapsed" id="metadataPanel" style="display: none;">
+                    <div class="panel-header" onclick="togglePanel('metadataPanel')">
+                        <span class="panel-title">Metadata</span>
+                        <span class="panel-toggle">&#9660;</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre id="metadataContent" style="font-family: var(--font-mono); font-size: 0.8125rem; color: var(--text-secondary);"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Matrix Modal -->
+    <div class="matrix-modal" id="matrixModal" onclick="if(event.target === this) closeMatrixModal()">
+        <div class="matrix-container">
+            <div class="matrix-header">
+                <div class="matrix-title">
+                    <span id="matrixName">Matrix</span>
+                    <span class="matrix-shape" id="matrixShape">[10 x 10]</span>
+                </div>
+                <button class="matrix-close" onclick="closeMatrixModal()">&times;</button>
+            </div>
+            <div class="matrix-body">
+                <canvas class="matrix-canvas" id="matrixCanvas"></canvas>
+            </div>
+            <div class="matrix-footer">
+                <div class="matrix-stats" id="matrixStats">
+                    <div class="matrix-stat">
+                        <span class="matrix-stat-label">min:</span>
+                        <span class="matrix-stat-value" id="matrixMin">0</span>
+                    </div>
+                    <div class="matrix-stat">
+                        <span class="matrix-stat-label">max:</span>
+                        <span class="matrix-stat-value" id="matrixMax">1</span>
+                    </div>
+                    <div class="matrix-stat">
+                        <span class="matrix-stat-label">dtype:</span>
+                        <span class="matrix-stat-value" id="matrixDtype">float64</span>
+                    </div>
+                </div>
+                <div class="color-scale">
+                    <span>min</span>
+                    <div class="color-bar"></div>
+                    <span>max</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tooltip -->
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        // ===== CVX Parser =====
+        class CVXParser {
+            constructor() {
+                this.data = null;
+                this.variables = new Map();
+                this.parameters = new Map();
+                this.constants = new Map();
+            }
+
+            parse(jsonString) {
+                try {
+                    this.data = JSON.parse(jsonString);
+                } catch (e) {
+                    throw new Error(`Invalid JSON: ${e.message}`);
+                }
+
+                // Validate version
+                const version = this.data.cvx_version || '1.0.0';
+                const major = parseInt(version.split('.')[0]);
+                if (major !== 1) {
+                    throw new Error(`Unsupported CVX format version: ${version}`);
+                }
+
+                // Index variables
+                this.variables.clear();
+                for (const [name, varData] of Object.entries(this.data.variables || {})) {
+                    this.variables.set(name, varData);
+                }
+
+                // Index parameters
+                this.parameters.clear();
+                for (const [name, paramData] of Object.entries(this.data.parameters || {})) {
+                    this.parameters.set(name, paramData);
+                }
+
+                // Index constants
+                this.constants.clear();
+                for (const [id, constData] of Object.entries(this.data.constants || {})) {
+                    this.constants.set(id, constData);
+                }
+
+                return this.data;
+            }
+
+            getVariable(name) {
+                return this.variables.get(name);
+            }
+
+            getParameter(name) {
+                return this.parameters.get(name);
+            }
+
+            getConstant(id) {
+                return this.constants.get(id);
+            }
+
+            // Decode special value types
+            decodeValue(val) {
+                if (val === null || val === undefined) return null;
+                if (typeof val !== 'object') return val;
+
+                // Special float values
+                if (val.$float !== undefined) {
+                    if (val.$float === 'nan') return NaN;
+                    if (val.$float === 'inf') return Infinity;
+                    if (val.$float === '-inf') return -Infinity;
+                    return parseFloat(val.$float);
+                }
+
+                // Fraction
+                if (val.$fraction !== undefined) {
+                    const [num, den] = val.$fraction;
+                    return num / den;
+                }
+
+                // Tuple (treat as array)
+                if (val.$tuple !== undefined) {
+                    return val.$tuple.map(v => this.decodeValue(v));
+                }
+
+                // Slice
+                if (val.$slice !== undefined) {
+                    return { type: 'slice', value: val.$slice };
+                }
+
+                // Ndarray
+                if (val.$ndarray !== undefined) {
+                    const arr = val.$ndarray;
+                    const shape = val.shape || [];
+                    const dtype = val.dtype || 'float64';
+
+                    // Complex array
+                    if (typeof arr === 'object' && arr.real !== undefined) {
+                        return {
+                            type: 'ndarray',
+                            data: { real: arr.real, imag: arr.imag },
+                            shape,
+                            dtype,
+                            isComplex: true
+                        };
+                    }
+
+                    return {
+                        type: 'ndarray',
+                        data: this.flattenArray(arr),
+                        shape,
+                        dtype,
+                        isComplex: false
+                    };
+                }
+
+                // Sparse matrix
+                if (val.$sparse !== undefined) {
+                    return {
+                        type: 'sparse',
+                        data: val.$sparse.data,
+                        row: val.$sparse.row,
+                        col: val.$sparse.col,
+                        shape: val.shape,
+                        dtype: val.dtype || 'float64',
+                        nnz: val.$sparse.data.length
+                    };
+                }
+
+                // External reference (can't load in standalone)
+                if (val.$ref !== undefined) {
+                    return {
+                        type: 'external_ref',
+                        path: val.$ref,
+                        shape: val.shape,
+                        dtype: val.dtype
+                    };
+                }
+
+                if (val.$sparse_ref !== undefined) {
+                    return {
+                        type: 'external_sparse_ref',
+                        path: val.$sparse_ref,
+                        shape: val.shape,
+                        format: val.format,
+                        nnz: val.nnz
+                    };
+                }
+
+                // Inline constant
+                if (val.$const_inline !== undefined) {
+                    return this.decodeValue(val.$const_inline);
+                }
+
+                // Constant reference
+                if (val.$const !== undefined) {
+                    const constData = this.getConstant(val.$const);
+                    return constData ? this.decodeValue(constData) : null;
+                }
+
+                return val;
+            }
+
+            flattenArray(arr, result = []) {
+                if (!Array.isArray(arr)) {
+                    result.push(arr);
+                } else {
+                    for (const item of arr) {
+                        this.flattenArray(item, result);
+                    }
+                }
+                return result;
+            }
+
+            getProblemStats() {
+                const stats = {
+                    numVariables: this.variables.size,
+                    numParameters: this.parameters.size,
+                    numConstants: this.constants.size,
+                    numConstraints: (this.data.constraints || []).length,
+                    sense: this.data.objective?.sense || 'minimize',
+                    constraintTypes: {},
+                    problemType: 'LP',
+                    hasIntegerVars: false,
+                    hasBooleanVars: false
+                };
+
+                // Count constraint types
+                for (const c of (this.data.constraints || [])) {
+                    const type = c.type || 'Unknown';
+                    stats.constraintTypes[type] = (stats.constraintTypes[type] || 0) + 1;
+                }
+
+                // Check variable attributes
+                for (const [, varData] of this.variables) {
+                    const attrs = varData.attributes || {};
+                    if (attrs.integer) stats.hasIntegerVars = true;
+                    if (attrs.boolean) stats.hasBooleanVars = true;
+                }
+
+                // Determine problem type
+                stats.problemType = this.detectProblemType();
+
+                return stats;
+            }
+
+            detectProblemType() {
+                const types = new Set();
+
+                // Check constraint types
+                for (const c of (this.data.constraints || [])) {
+                    const t = c.type || '';
+                    if (t === 'SOC' || t === 'SecondOrderCone') types.add('SOCP');
+                    if (t === 'PSD' || t === 'SDP' || t.includes('PSD')) types.add('SDP');
+                    if (t === 'ExpCone' || t.includes('Exp')) types.add('EXP');
+                }
+
+                // Check for quadratic forms in objective
+                const hasQuadratic = this.checkForQuadratic(this.data.objective?.expr);
+                if (hasQuadratic) types.add('QP');
+
+                // Check for integer/boolean variables
+                for (const [, varData] of this.variables) {
+                    const attrs = varData.attributes || {};
+                    if (attrs.integer || attrs.boolean) types.add('MIP');
+                    if (attrs.PSD) types.add('SDP');
+                }
+
+                // Priority order
+                if (types.has('SDP')) return 'SDP';
+                if (types.has('EXP')) return 'EXP';
+                if (types.has('SOCP')) return 'SOCP';
+                if (types.has('MIP')) return 'MIP';
+                if (types.has('QP')) return 'QP';
+                return 'LP';
+            }
+
+            checkForQuadratic(expr) {
+                if (!expr || typeof expr !== 'object') return false;
+                const type = expr.type || '';
+                if (type.includes('quad') || type.includes('Quad')) return true;
+                if (type === 'power' && expr.args && expr.args[1] === 2) return true;
+
+                // Check args recursively
+                if (expr.args) {
+                    for (const arg of expr.args) {
+                        if (this.checkForQuadratic(arg)) return true;
+                    }
+                }
+                return false;
+            }
+        }
+
+        // ===== Expression Renderer =====
+        class ExpressionRenderer {
+            constructor(parser) {
+                this.parser = parser;
+            }
+
+            render(expr, depth = 0) {
+                if (expr === null || expr === undefined) {
+                    return '<span class="tree-const">null</span>';
+                }
+
+                if (typeof expr !== 'object') {
+                    return `<span class="tree-const">${this.formatValue(expr)}</span>`;
+                }
+
+                // Variable reference
+                if (expr.$var !== undefined) {
+                    return `<span class="tree-var">${expr.$var}</span>`;
+                }
+
+                // Parameter reference
+                if (expr.$param !== undefined) {
+                    return `<span class="tree-param">${expr.$param}</span>`;
+                }
+
+                // Constant reference
+                if (expr.$const !== undefined) {
+                    const constData = this.parser.getConstant(expr.$const);
+                    if (constData) {
+                        const decoded = this.parser.decodeValue(constData);
+                        return this.renderConstant(decoded, expr.$const);
+                    }
+                    return `<span class="tree-const">[${expr.$const}]</span>`;
+                }
+
+                // Inline constant
+                if (expr.$const_inline !== undefined) {
+                    const decoded = this.parser.decodeValue(expr.$const_inline);
+                    return this.renderConstant(decoded);
+                }
+
+                // Expression node with type
+                if (expr.type !== undefined) {
+                    return this.renderAtom(expr, depth);
+                }
+
+                // Unknown object
+                return `<span class="tree-const">{...}</span>`;
+            }
+
+            renderConstant(decoded, id = null) {
+                if (decoded === null || decoded === undefined) {
+                    return '<span class="tree-const">null</span>';
+                }
+
+                if (typeof decoded === 'number') {
+                    return `<span class="tree-const">${this.formatValue(decoded)}</span>`;
+                }
+
+                if (typeof decoded === 'object') {
+                    if (decoded.type === 'ndarray') {
+                        const shapeStr = decoded.shape.join('×');
+                        const clickable = decoded.shape.length >= 1 && decoded.shape[0] > 0;
+                        const dataAttr = clickable ? `onclick="app.showMatrix('${id || 'const'}', this)" data-matrix='${JSON.stringify(decoded)}'` : '';
+                        return `<span class="tree-const" style="${clickable ? 'cursor:pointer;text-decoration:underline;' : ''}" ${dataAttr}>[${shapeStr} matrix]</span>`;
+                    }
+                    if (decoded.type === 'sparse') {
+                        const shapeStr = decoded.shape.join('×');
+                        return `<span class="tree-const" style="cursor:pointer;text-decoration:underline;" onclick="app.showMatrix('sparse', this)" data-matrix='${JSON.stringify(decoded)}'>[${shapeStr} sparse, ${decoded.nnz} nnz]</span>`;
+                    }
+                    if (decoded.type === 'external_ref' || decoded.type === 'external_sparse_ref') {
+                        return `<span class="tree-const" style="color:var(--accent-yellow);">[external: ${decoded.path}]</span>`;
+                    }
+                    if (Array.isArray(decoded)) {
+                        if (decoded.length <= 5) {
+                            return `<span class="tree-const">[${decoded.map(v => this.formatValue(v)).join(', ')}]</span>`;
+                        }
+                        return `<span class="tree-const">[${decoded.length} elements]</span>`;
+                    }
+                }
+
+                return `<span class="tree-const">${this.formatValue(decoded)}</span>`;
+            }
+
+            renderAtom(expr, depth) {
+                const type = expr.type;
+                const shortType = type.split('.').pop();
+                const args = expr.args || [];
+                const hasChildren = args.length > 0;
+                const nodeId = `node_${Math.random().toString(36).substr(2, 9)}`;
+
+                // Special rendering for common atoms
+                const display = this.getAtomDisplay(shortType, args);
+
+                if (!hasChildren) {
+                    return `<span class="tree-atom">${display}</span>`;
+                }
+
+                const collapsed = depth > 2 ? 'collapsed' : '';
+                const childrenHidden = depth > 2 ? 'hidden' : '';
+
+                let html = `<div class="tree-node tree-root">`;
+                html += `<div class="tree-label">`;
+                html += `<span class="tree-toggle ${collapsed}" onclick="toggleTreeNode(this)">&#9660;</span>`;
+                html += `<span class="tree-atom">${display}</span>`;
+                html += `</div>`;
+                html += `<div class="tree-children ${childrenHidden}">`;
+
+                for (let i = 0; i < args.length; i++) {
+                    html += `<div class="tree-node">`;
+                    html += this.render(args[i], depth + 1);
+                    html += `</div>`;
+                }
+
+                html += `</div></div>`;
+                return html;
+            }
+
+            getAtomDisplay(type, args) {
+                // Map atom types to display names
+                const displayMap = {
+                    'sum': 'sum',
+                    'Sum': 'sum',
+                    'norm': '‖·‖',
+                    'Norm': '‖·‖',
+                    'norm2': '‖·‖₂',
+                    'norm1': '‖·‖₁',
+                    'normInf': '‖·‖∞',
+                    'quad_form': 'x\'Qx',
+                    'QuadForm': 'x\'Qx',
+                    'trace': 'tr',
+                    'Trace': 'tr',
+                    'log': 'log',
+                    'Log': 'log',
+                    'exp': 'exp',
+                    'Exp': 'exp',
+                    'sqrt': '√',
+                    'Sqrt': '√',
+                    'abs': '|·|',
+                    'Abs': '|·|',
+                    'max': 'max',
+                    'Max': 'max',
+                    'min': 'min',
+                    'Min': 'min',
+                    'AddExpression': '+',
+                    'MulExpression': '×',
+                    'NegExpression': '−',
+                    'DivExpression': '÷',
+                    'Transpose': 'ᵀ',
+                    'reshape': 'reshape',
+                    'Reshape': 'reshape',
+                    'vstack': 'vstack',
+                    'hstack': 'hstack',
+                    'Vstack': 'vstack',
+                    'Hstack': 'hstack',
+                    'diag': 'diag',
+                    'Diag': 'diag',
+                    'Promote': 'promote',
+                    'Index': '[]',
+                    'SpecialIndex': '[]',
+                    'Constant': 'const',
+                    'Variable': 'var',
+                    'Parameter': 'param'
+                };
+
+                return displayMap[type] || type;
+            }
+
+            formatValue(val) {
+                if (val === null || val === undefined) return 'null';
+                if (typeof val === 'number') {
+                    if (Number.isNaN(val)) return 'NaN';
+                    if (!Number.isFinite(val)) return val > 0 ? '∞' : '-∞';
+                    if (Number.isInteger(val)) return val.toString();
+                    if (Math.abs(val) < 0.001 || Math.abs(val) >= 10000) {
+                        return val.toExponential(3);
+                    }
+                    return val.toFixed(4).replace(/\.?0+$/, '');
+                }
+                return String(val);
+            }
+        }
+
+        // ===== Matrix Visualizer =====
+        class MatrixVisualizer {
+            constructor() {
+                this.canvas = document.getElementById('matrixCanvas');
+                this.ctx = this.canvas.getContext('2d');
+            }
+
+            render(matrixData, name) {
+                document.getElementById('matrixName').textContent = name;
+                document.getElementById('matrixModal').classList.add('active');
+
+                if (matrixData.type === 'sparse') {
+                    this.renderSparse(matrixData);
+                } else if (matrixData.type === 'ndarray') {
+                    this.renderDense(matrixData);
+                }
+            }
+
+            renderDense(matrixData) {
+                const data = matrixData.data;
+                const shape = matrixData.shape;
+                const dtype = matrixData.dtype || 'float64';
+
+                // Handle different shapes
+                let rows, cols;
+                if (shape.length === 0) {
+                    rows = 1; cols = 1;
+                } else if (shape.length === 1) {
+                    rows = 1; cols = shape[0];
+                } else {
+                    rows = shape[0];
+                    cols = shape[1];
+                }
+
+                document.getElementById('matrixShape').textContent = `[${rows} × ${cols}]`;
+                document.getElementById('matrixDtype').textContent = dtype;
+
+                // Calculate stats
+                const flatData = Array.isArray(data) ? data : [data];
+                let min = Infinity, max = -Infinity, sum = 0;
+                for (const v of flatData) {
+                    if (v < min) min = v;
+                    if (v > max) max = v;
+                    sum += v;
+                }
+
+                document.getElementById('matrixMin').textContent = this.formatNum(min);
+                document.getElementById('matrixMax').textContent = this.formatNum(max);
+
+                // Draw heatmap
+                const maxSize = 500;
+                const cellSize = Math.max(1, Math.min(20, Math.floor(maxSize / Math.max(rows, cols))));
+                const width = cols * cellSize;
+                const height = rows * cellSize;
+
+                this.canvas.width = width;
+                this.canvas.height = height;
+
+                const range = max - min || 1;
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < cols; j++) {
+                        const idx = i * cols + j;
+                        const val = flatData[idx] || 0;
+                        const normalized = (val - min) / range;
+                        const color = this.getColor(normalized);
+
+                        this.ctx.fillStyle = color;
+                        this.ctx.fillRect(j * cellSize, i * cellSize, cellSize, cellSize);
+                    }
+                }
+            }
+
+            renderSparse(matrixData) {
+                const { data, row, col, shape, dtype, nnz } = matrixData;
+                const [rows, cols] = shape;
+
+                document.getElementById('matrixShape').textContent = `[${rows} × ${cols}] sparse, ${nnz} nnz`;
+                document.getElementById('matrixDtype').textContent = dtype;
+
+                // Stats
+                let min = Infinity, max = -Infinity;
+                for (const v of data) {
+                    if (v < min) min = v;
+                    if (v > max) max = v;
+                }
+
+                document.getElementById('matrixMin').textContent = this.formatNum(min);
+                document.getElementById('matrixMax').textContent = this.formatNum(max);
+
+                // Draw sparsity pattern
+                const maxSize = 500;
+                const cellSize = Math.max(1, Math.min(10, Math.floor(maxSize / Math.max(rows, cols))));
+                const width = cols * cellSize;
+                const height = rows * cellSize;
+
+                this.canvas.width = width;
+                this.canvas.height = height;
+
+                // Background
+                this.ctx.fillStyle = '#1c2128';
+                this.ctx.fillRect(0, 0, width, height);
+
+                // Non-zeros
+                const range = max - min || 1;
+                for (let i = 0; i < data.length; i++) {
+                    const r = row[i];
+                    const c = col[i];
+                    const val = data[i];
+                    const normalized = (val - min) / range;
+                    const color = this.getColor(normalized);
+
+                    this.ctx.fillStyle = color;
+                    this.ctx.fillRect(c * cellSize, r * cellSize, Math.max(1, cellSize - 1), Math.max(1, cellSize - 1));
+                }
+            }
+
+            getColor(t) {
+                // Blue-white-red diverging colormap
+                if (t < 0.5) {
+                    const s = t * 2;
+                    const r = Math.round(33 + (247 - 33) * s);
+                    const g = Math.round(102 + (247 - 102) * s);
+                    const b = Math.round(172 + (247 - 172) * s);
+                    return `rgb(${r},${g},${b})`;
+                } else {
+                    const s = (t - 0.5) * 2;
+                    const r = Math.round(247 + (178 - 247) * s);
+                    const g = Math.round(247 + (24 - 247) * s);
+                    const b = Math.round(247 + (43 - 247) * s);
+                    return `rgb(${r},${g},${b})`;
+                }
+            }
+
+            formatNum(val) {
+                if (!Number.isFinite(val)) return val > 0 ? '∞' : '-∞';
+                if (Math.abs(val) < 0.001 || Math.abs(val) >= 10000) {
+                    return val.toExponential(2);
+                }
+                return val.toFixed(3);
+            }
+        }
+
+        // ===== App Controller =====
+        class AppController {
+            constructor() {
+                this.parser = new CVXParser();
+                this.renderer = new ExpressionRenderer(this.parser);
+                this.matrixViz = new MatrixVisualizer();
+                this.currentFile = null;
+                this.constraintPage = 0;
+                this.constraintsPerPage = 20;
+            }
+
+            init() {
+                this.setupDropZone();
+                this.setupKeyboard();
+            }
+
+            setupDropZone() {
+                const dropZone = document.getElementById('dropZone');
+                const dropTarget = document.getElementById('dropTarget');
+                const fileInput = document.getElementById('fileInput');
+
+                // Prevent default drag behaviors
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    document.body.addEventListener(eventName, e => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    });
+                });
+
+                // Highlight drop zone
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    dropTarget.addEventListener(eventName, () => {
+                        dropTarget.classList.add('dragover');
+                    });
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    dropTarget.addEventListener(eventName, () => {
+                        dropTarget.classList.remove('dragover');
+                    });
+                });
+
+                // Handle drop
+                dropTarget.addEventListener('drop', e => {
+                    const file = e.dataTransfer.files[0];
+                    if (file) this.loadFile(file);
+                });
+
+                // Handle file input
+                fileInput.addEventListener('change', e => {
+                    const file = e.target.files[0];
+                    if (file) this.loadFile(file);
+                });
+
+                // Click to browse
+                dropTarget.addEventListener('click', e => {
+                    if (e.target.tagName !== 'BUTTON') {
+                        fileInput.click();
+                    }
+                });
+            }
+
+            setupKeyboard() {
+                document.addEventListener('keydown', e => {
+                    if (e.key === 'Escape') {
+                        if (document.getElementById('matrixModal').classList.contains('active')) {
+                            closeMatrixModal();
+                        } else if (!document.getElementById('dropZone').classList.contains('hidden')) {
+                            // Already at drop zone
+                        } else {
+                            this.reset();
+                        }
+                    }
+                });
+            }
+
+            loadFile(file) {
+                this.currentFile = file.name;
+
+                const reader = new FileReader();
+                reader.onload = e => {
+                    try {
+                        const content = e.target.result;
+                        this.parser.parse(content);
+                        this.showViewer();
+                        this.renderAll();
+                    } catch (err) {
+                        alert(`Error loading file: ${err.message}`);
+                        console.error(err);
+                    }
+                };
+                reader.onerror = () => {
+                    alert('Error reading file');
+                };
+                reader.readAsText(file);
+            }
+
+            showViewer() {
+                document.getElementById('dropZone').classList.add('hidden');
+                document.getElementById('viewer').classList.add('active');
+            }
+
+            reset() {
+                document.getElementById('dropZone').classList.remove('hidden');
+                document.getElementById('viewer').classList.remove('active');
+                document.getElementById('fileInput').value = '';
+                this.constraintPage = 0;
+            }
+
+            renderAll() {
+                this.renderHeader();
+                this.renderDashboard();
+                this.renderVariables();
+                this.renderParameters();
+                this.renderConstants();
+                this.renderObjective();
+                this.renderConstraints();
+                this.renderMetadata();
+            }
+
+            renderHeader() {
+                const stats = this.parser.getProblemStats();
+
+                document.getElementById('fileName').textContent = this.currentFile;
+
+                const badge = document.getElementById('problemBadge');
+                badge.textContent = stats.problemType;
+                badge.className = 'problem-badge badge-' + stats.problemType.toLowerCase();
+            }
+
+            renderDashboard() {
+                const stats = this.parser.getProblemStats();
+                const dashboard = document.getElementById('dashboard');
+
+                let html = '';
+
+                // Objective sense
+                const senseClass = stats.sense === 'maximize' ? 'maximize' : 'minimize';
+                html += `
+                    <div class="metric-card ${senseClass}">
+                        <div class="metric-value">${stats.sense === 'maximize' ? 'MAX' : 'MIN'}</div>
+                        <div class="metric-label">Objective</div>
+                    </div>
+                `;
+
+                // Variables
+                html += `
+                    <div class="metric-card">
+                        <div class="metric-value">${stats.numVariables}</div>
+                        <div class="metric-label">Variables</div>
+                    </div>
+                `;
+
+                // Parameters
+                if (stats.numParameters > 0) {
+                    html += `
+                        <div class="metric-card">
+                            <div class="metric-value">${stats.numParameters}</div>
+                            <div class="metric-label">Parameters</div>
+                        </div>
+                    `;
+                }
+
+                // Constraints
+                html += `
+                    <div class="metric-card">
+                        <div class="metric-value">${stats.numConstraints}</div>
+                        <div class="metric-label">Constraints</div>
+                    </div>
+                `;
+
+                dashboard.innerHTML = html;
+            }
+
+            renderVariables() {
+                const varsList = document.getElementById('varsList');
+                document.getElementById('varsCount').textContent = this.parser.variables.size;
+
+                if (this.parser.variables.size === 0) {
+                    varsList.innerHTML = '<div class="empty-state"><div class="empty-icon">∅</div>No variables</div>';
+                    return;
+                }
+
+                let html = '';
+                for (const [name, varData] of this.parser.variables) {
+                    const shape = varData.shape || [];
+                    const shapeStr = shape.length === 0 ? 'scalar' : shape.join('×');
+                    const attrs = varData.attributes || {};
+
+                    html += `<div class="var-item">`;
+                    html += `<div class="var-name">${name}</div>`;
+                    html += `<div class="var-meta">`;
+                    html += `<span class="var-shape">${shapeStr}</span>`;
+
+                    // Attribute badges
+                    for (const [attr, val] of Object.entries(attrs)) {
+                        if (val === true) {
+                            html += `<span class="attr-badge ${attr.toLowerCase()}">${attr}</span>`;
+                        }
+                    }
+
+                    html += `</div></div>`;
+                }
+
+                varsList.innerHTML = html;
+            }
+
+            renderParameters() {
+                const paramsList = document.getElementById('paramsList');
+                document.getElementById('paramsCount').textContent = this.parser.parameters.size;
+
+                if (this.parser.parameters.size === 0) {
+                    paramsList.innerHTML = '<div class="empty-state"><div class="empty-icon">∅</div>No parameters</div>';
+                    document.getElementById('paramsSection').classList.add('collapsed');
+                    return;
+                }
+
+                let html = '';
+                for (const [name, paramData] of this.parser.parameters) {
+                    const shape = paramData.shape || [];
+                    const shapeStr = shape.length === 0 ? 'scalar' : shape.join('×');
+
+                    html += `<div class="param-item">`;
+                    html += `<div class="var-name">${name}</div>`;
+                    html += `<div class="var-meta">`;
+                    html += `<span class="var-shape">${shapeStr}</span>`;
+                    html += `</div></div>`;
+                }
+
+                paramsList.innerHTML = html;
+            }
+
+            renderConstants() {
+                const constsList = document.getElementById('constsList');
+                document.getElementById('constsCount').textContent = this.parser.constants.size;
+
+                if (this.parser.constants.size === 0) {
+                    constsList.innerHTML = '<div class="empty-state"><div class="empty-icon">∅</div>No constants</div>';
+                    return;
+                }
+
+                let html = '';
+                for (const [id, constData] of this.parser.constants) {
+                    const decoded = this.parser.decodeValue(constData);
+                    let info = '';
+
+                    if (decoded && typeof decoded === 'object') {
+                        if (decoded.type === 'ndarray') {
+                            info = `[${decoded.shape.join('×')}] ${decoded.dtype}`;
+                        } else if (decoded.type === 'sparse') {
+                            info = `[${decoded.shape.join('×')}] sparse, ${decoded.nnz} nnz`;
+                        } else if (decoded.type === 'external_ref') {
+                            info = `external: ${decoded.path}`;
+                        }
+                    } else {
+                        info = String(decoded);
+                    }
+
+                    html += `<div class="var-item" style="cursor:default;">`;
+                    html += `<div class="var-name" style="color:var(--accent-orange);">${id}</div>`;
+                    html += `<div class="var-meta"><span class="var-shape">${info}</span></div>`;
+                    html += `</div>`;
+                }
+
+                constsList.innerHTML = html;
+            }
+
+            renderObjective() {
+                const objective = this.parser.data.objective;
+                if (!objective) {
+                    document.getElementById('objectivePanel').style.display = 'none';
+                    return;
+                }
+
+                const sense = objective.sense || 'minimize';
+                const senseEl = document.getElementById('objectiveSense');
+                senseEl.textContent = sense.toUpperCase();
+                senseEl.className = 'objective-sense sense-' + sense;
+
+                const treeEl = document.getElementById('objectiveTree');
+                treeEl.innerHTML = this.renderer.render(objective.expr, 0);
+            }
+
+            renderConstraints() {
+                const constraints = this.parser.data.constraints || [];
+                document.getElementById('constraintsCount').textContent = constraints.length;
+
+                if (constraints.length === 0) {
+                    document.getElementById('constraintsList').innerHTML =
+                        '<div class="empty-state"><div class="empty-icon">∅</div>Unconstrained problem</div>';
+                    document.getElementById('constraintsPagination').innerHTML = '';
+                    return;
+                }
+
+                // Pagination
+                const start = this.constraintPage * this.constraintsPerPage;
+                const end = Math.min(start + this.constraintsPerPage, constraints.length);
+                const pageConstraints = constraints.slice(start, end);
+
+                let html = '';
+                for (let i = 0; i < pageConstraints.length; i++) {
+                    const c = pageConstraints[i];
+                    const globalIdx = start + i;
+                    const type = c.type || 'Unknown';
+                    const module = c.module || '';
+                    const shortType = type.split('.').pop();
+                    const typeClass = this.getConstraintTypeClass(shortType, module);
+                    const typeSymbol = this.getConstraintTypeSymbol(shortType, module);
+
+                    html += `<div class="constraint-item collapsed">`;
+                    html += `<div class="constraint-header" onclick="toggleConstraint(this.parentElement)">`;
+                    html += `<span class="constraint-type ${typeClass}">${typeSymbol}</span>`;
+                    html += `<span class="constraint-preview">${shortType}</span>`;
+                    html += `<span class="constraint-toggle">&#9660;</span>`;
+                    html += `</div>`;
+                    html += `<div class="constraint-body">`;
+                    html += `<div class="expr-tree">${this.renderConstraintExpr(c)}</div>`;
+                    html += `</div></div>`;
+                }
+
+                document.getElementById('constraintsList').innerHTML = html;
+
+                // Pagination controls
+                const totalPages = Math.ceil(constraints.length / this.constraintsPerPage);
+                if (totalPages > 1) {
+                    let paginationHtml = `
+                        <button class="page-btn" onclick="app.prevConstraintPage()" ${this.constraintPage === 0 ? 'disabled' : ''}>← Prev</button>
+                        <span>Page ${this.constraintPage + 1} of ${totalPages}</span>
+                        <button class="page-btn" onclick="app.nextConstraintPage()" ${this.constraintPage >= totalPages - 1 ? 'disabled' : ''}>Next →</button>
+                    `;
+                    document.getElementById('constraintsPagination').innerHTML = paginationHtml;
+                } else {
+                    document.getElementById('constraintsPagination').innerHTML = '';
+                }
+            }
+
+            renderConstraintExpr(constraint) {
+                const args = constraint.args || [];
+                if (args.length === 0) {
+                    return '<span class="tree-const">(no arguments)</span>';
+                }
+
+                let html = '';
+                for (let i = 0; i < args.length; i++) {
+                    html += this.renderer.render(args[i], 0);
+                    if (i < args.length - 1) {
+                        html += '<br>';
+                    }
+                }
+                return html;
+            }
+
+            getConstraintTypeClass(type, module) {
+                const t = type.toLowerCase();
+                const m = (module || '').toLowerCase();
+
+                // Check module path for more precise detection
+                if (m.includes('zero') || t === 'equality' || t === 'zero') return 'type-zero';
+                if (m.includes('nonpos') || t === 'inequality') return 'type-nonpos';  // Default inequality to ≤
+                if (m.includes('nonneg') || t === 'nonneg') return 'type-nonneg';
+                if (t === 'soc' || t.includes('secondorder') || m.includes('soc')) return 'type-soc';
+                if (t === 'psd' || t.includes('psd') || m.includes('psd')) return 'type-psd';
+                if (t.includes('exp') || m.includes('exp')) return 'type-exp';
+                return 'type-other';
+            }
+
+            getConstraintTypeSymbol(type, module) {
+                const t = type.toLowerCase();
+                const m = (module || '').toLowerCase();
+
+                if (m.includes('zero') || t === 'equality' || t === 'zero') return '=';
+                if (m.includes('nonpos') || t === 'inequality') return '≤';
+                if (m.includes('nonneg') || t === 'nonneg') return '≥';
+                if (t === 'soc' || t.includes('secondorder') || m.includes('soc')) return '◎';
+                if (t === 'psd' || t.includes('psd') || m.includes('psd')) return '▣';
+                if (t.includes('exp') || m.includes('exp')) return 'e';
+                return '?';
+            }
+
+            prevConstraintPage() {
+                if (this.constraintPage > 0) {
+                    this.constraintPage--;
+                    this.renderConstraints();
+                }
+            }
+
+            nextConstraintPage() {
+                const constraints = this.parser.data.constraints || [];
+                const totalPages = Math.ceil(constraints.length / this.constraintsPerPage);
+                if (this.constraintPage < totalPages - 1) {
+                    this.constraintPage++;
+                    this.renderConstraints();
+                }
+            }
+
+            renderMetadata() {
+                const metadata = this.parser.data.metadata;
+                const panel = document.getElementById('metadataPanel');
+
+                if (!metadata || Object.keys(metadata).length === 0) {
+                    panel.style.display = 'none';
+                    return;
+                }
+
+                panel.style.display = 'block';
+                document.getElementById('metadataContent').textContent = JSON.stringify(metadata, null, 2);
+            }
+
+            showMatrix(name, element) {
+                try {
+                    const matrixData = JSON.parse(element.dataset.matrix);
+                    this.matrixViz.render(matrixData, name);
+                } catch (e) {
+                    console.error('Error showing matrix:', e);
+                }
+            }
+        }
+
+        // ===== Utility Functions =====
+        function toggleSection(id) {
+            document.getElementById(id).classList.toggle('collapsed');
+        }
+
+        function togglePanel(id) {
+            document.getElementById(id).classList.toggle('collapsed');
+        }
+
+        function toggleConstraint(el) {
+            el.classList.toggle('collapsed');
+        }
+
+        function toggleTreeNode(toggleEl) {
+            toggleEl.classList.toggle('collapsed');
+            const children = toggleEl.parentElement.nextElementSibling;
+            if (children) {
+                children.classList.toggle('hidden');
+            }
+        }
+
+        function closeMatrixModal() {
+            document.getElementById('matrixModal').classList.remove('active');
+        }
+
+        // ===== Initialize =====
+        const app = new AppController();
+        document.addEventListener('DOMContentLoaded', () => app.init());
+    </script>
+</body>
+</html>
